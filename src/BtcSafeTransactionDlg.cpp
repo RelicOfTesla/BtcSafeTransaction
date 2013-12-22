@@ -41,6 +41,7 @@ const std::string DefaultPubCoinLabel = "BtcSafeTransaction_PubKey";
 
 shared_ptr<CRpcHelper> g_pRpcHelper;
 shared_ptr<CAppOption> g_pOption;
+char g_CoinAddr_FirstChar = 0;
 
 #define MIN_SEND_AMOUNT 0.0000001
 #define ZERO_AMOUNT 0.0000001
@@ -53,7 +54,6 @@ void PushError(const std::string& ec);
 std::string HttpGet(const std::string& url);
 CRpcHelper::txfrom_list WebQuery_GetTxFrom(const std::string& addr);
 double WebQuery_GetMulSignBalance(const std::string& addr);
-char g_CoinAddr_FirstChar = 0;
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -865,7 +865,7 @@ double WebQuery_GetMulSignBalance(const std::string& addr)
 {
 	if (g_CoinAddr_FirstChar != '1')
 	{
-		throw std::runtime_error("not support coin type");
+		throw std::runtime_error("无法查询你的币种余额");
 	}
     bool must_confirmation = false;
     std::string explorer = "https://blockchain.info/q/addressbalance/" + addr;
