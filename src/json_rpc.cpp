@@ -102,7 +102,7 @@ std::string HttpGet(const std::string& url)
 	{
 		WinHttp::IWinHttpRequestPtr p;
 		p.CreateInstance("WinHttp.WinHttpRequest.5.1");
-		p->Open("POST", url.c_str(), VARIANT_FALSE);
+		p->Open("GET", url.c_str(), VARIANT_FALSE);
 		p->Send(bstr_t());
 		UINT state = p->Status;
 

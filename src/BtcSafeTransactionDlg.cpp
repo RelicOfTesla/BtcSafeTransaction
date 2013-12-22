@@ -155,7 +155,7 @@ BEGIN_MESSAGE_MAP(CBtcSafeTransactionDlg, CDialog)
     ON_BN_CLICKED(IDC_RADIO_MODE_RECV_2, &CBtcSafeTransactionDlg::OnBnClickedRadio1ModeRecv2)
     ON_BN_CLICKED(IDC_RADIO_MODE_RECV_1, &CBtcSafeTransactionDlg::OnBnClickedRadio1ModeRecv1)
     ON_BN_CLICKED(IDC_RADIO_MODE_SEND_2, &CBtcSafeTransactionDlg::OnBnClickedRadioModeSend2)
-	ON_BN_CLICKED(IDC_BUTTON_WEB_VIEW, &CBtcSafeTransactionDlg::OnBnClickedButtonWebView)
+    ON_BN_CLICKED(IDC_BUTTON_WEB_VIEW, &CBtcSafeTransactionDlg::OnBnClickedButtonWebView)
 END_MESSAGE_MAP()
 
 bool GetCertCheck(const std::string& filepath);
@@ -167,11 +167,11 @@ BOOL CBtcSafeTransactionDlg::OnInitDialog()
     CDialog::OnInitDialog();
 
 #if !_DEBUG
-	if (!GetCertCheck(GetAppPath()))
-	{
-		AfxMessageBox("程序被篡改，禁止使用!");
-		PostMessage(WM_CLOSE, 0, 0);
-	}
+    if (!GetCertCheck(GetAppPath()))
+    {
+        AfxMessageBox("程序被篡改，禁止使用!");
+        PostMessage(WM_CLOSE, 0, 0);
+    }
 #endif
 
     SetIcon(m_hIcon, TRUE);
@@ -192,8 +192,8 @@ BOOL CBtcSafeTransactionDlg::OnInitDialog()
     }
     UpdateDisableControl();
 
-	InsertLog("程序源码:https://github.com/laybor/BtcSafeTransaction");
-	InsertLog("作者网站:http://xingfeng.org");
+    InsertLog("程序源码:https://github.com/laybor/BtcSafeTransaction");
+    InsertLog("作者网站:http://xingfeng.org");
 
     SetTimer(TimerID_CheckProcess, TimeInterval_CheckProcess, 0);
     SetTimer(TimerID_RefreshPubKey, TimeInterval_RefreshPubKey, 0);
@@ -288,7 +288,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonGetP2psignAddr()
         SetDlgItemText(IDC_EDIT_P2PSIG_ADDR, MulSigAddr.c_str());;
 
         SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, "");
-		PostMessage(WM_TIMER, TimerID_RefreshMulSigAddrBalance, 0);
+        PostMessage(WM_TIMER, TimerID_RefreshMulSigAddrBalance, 0);
 
 
         std::string label = g_pRpcHelper->GetLabel(MulSigAddr);
@@ -325,9 +325,11 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonSendMoneyToP2psigAddr()
         {
             return;
         }
+
+        std::string txid;
         try
         {
-            g_pRpcHelper->SendAmount(p2psig_addr, fAmount);
+            txid = g_pRpcHelper->SendAmount(p2psig_addr, fAmount);
         }
         catch(const rpc_exception& e)
         {
@@ -338,7 +340,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonSendMoneyToP2psigAddr()
                 if (pstr->size())
                 {
                     g_pRpcHelper->EnterPassword(*pstr);
-                    g_pRpcHelper->SendAmount(p2psig_addr, fAmount);
+                    txid = g_pRpcHelper->SendAmount(p2psig_addr, fAmount);
                     isok = true;
                 }
             }
@@ -348,6 +350,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonSendMoneyToP2psigAddr()
             }
         }
         SetDlgItemText(IDC_EDIT_SEND_AMOUNT, "");
+        InsertLog("交易ID:" + txid);
         InsertLog("发送金额至担保地址成功，请发送你的公钥给商家.");
 
     }
@@ -459,15 +462,15 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonSelRecvAddr()
 
 size_t getvout(const CRpcHelper::TxDataInfo& txinfo, const std::string& addr)
 {
-	for (size_t i = 0; i < txinfo.dest_list.size(); ++i)
-	{
-		const CRpcHelper::TxDataInfo::TxDestInfo& r = txinfo.dest_list[i];
-		if( r.addr.count(addr) > 0 )
-		{
-			return i;
-		}
-	}
-	throw std::runtime_error("无法读取vout，找不到相关数据，请确认你的数据是最新的/请确认担保地址、买家/商家模式是对的");
+    for (size_t i = 0; i < txinfo.dest_list.size(); ++i)
+    {
+        const CRpcHelper::TxDataInfo::TxDestInfo& r = txinfo.dest_list[i];
+        if( r.addr.count(addr) > 0 )
+        {
+            return i;
+        }
+    }
+    throw std::runtime_error("无法读取vout，找不到相关数据，请确认你的数据是最新的/请确认担保地址、买家/商家模式是对的");
 }
 
 void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
@@ -491,8 +494,8 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         {
             txfrom_list = WebQuery_GetTxFrom(p2psig_addr);
         }
-		std::string balance_type = "余额";
-		double balance = atof(GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_BALANCE)).c_str());
+        std::string balance_type = "余额";
+        double balance = atof(GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_BALANCE)).c_str());
 
         if (txfrom_list.empty())
         {
@@ -502,7 +505,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
             {
                 throw std::logic_error("未找到交易数据，请更新blockchain");
             }
-			double recv_history = 0;
+            double recv_history = 0;
             std::list<std::string> strlist;
             // #DEFINE _SCL_SECURE_NO_WARNINGS
             boost::split(strlist, *pTxID, boost::is_any_of(",-;/|"));
@@ -527,14 +530,14 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
                 txfrom_list.push_back(from);
             }
 #if !WALLET_SAVE_NOTFULL_MULSIG_TX
-			balance_type = "历史金额";
-			balance = recv_history;
+            balance_type = "历史金额";
+            balance = recv_history;
 #endif
         }
         else
         {
 #if !WALLET_SAVE_NOTFULL_MULSIG_TX
-			double recv_history = 0;
+            double recv_history = 0;
             for (CRpcHelper::txfrom_list::iterator it = txfrom_list.begin(); it != txfrom_list.end(); ++it)
             {
                 CRpcHelper::TxDataInfo query_tx = g_pRpcHelper->GetTransactionInfo_FromData(
@@ -548,8 +551,8 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
                     assert(0);
                 }
             }
-			balance_type = "历史金额";
-			balance = recv_history;
+            balance_type = "历史金额";
+            balance = recv_history;
 #endif
         }
         if (txfrom_list.empty())
@@ -557,11 +560,11 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
             throw std::runtime_error("找不到相关数据，请更新数据库");
         }
 #if !WALLET_SAVE_NOTFULL_MULSIG_TX
-		SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, amount2str(balance).c_str());
+        SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, amount2str(balance).c_str());
 #endif
 
         std::string szAmount = GetWindowStlText(GetDlgItem(IDC_EDIT_SEND_AMOUNT));
-		double fAmount = atof(szAmount.c_str());
+        double fAmount = atof(szAmount.c_str());
         if ( fAmount <= MIN_SEND_AMOUNT )
         {
             throw std::logic_error("收款金额过小");
@@ -570,7 +573,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         {
             std::string sztip = str_format("你要收款的金额(%s)与担保地址%s(%s)不相同，确定继续收款么？",
                                            szAmount.c_str(),
-										   balance_type.c_str(),
+                                           balance_type.c_str(),
                                            amount2str(balance).c_str()
                                           );
             if( AfxMessageBox(sztip.c_str(), MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) == IDNO )
@@ -760,7 +763,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonSigEndAndSend()
             }
         }
         g_pRpcHelper->SendRawTransaction(txdata);
-		InsertLog("已确认发款完毕,建议上blockchain.info查一下是否有0确认的交易");
+        InsertLog("已确认发款完毕,建议上blockchain.info查一下是否有0确认的交易");
     }
     catch(std::exception& e)
     {
@@ -860,13 +863,8 @@ bool Async_IsRpcCanConnected()
     return g_rpc_can_connected;
 }
 
-
-double WebQuery_GetMulSignBalance(const std::string& addr)
+double WebQuery_GetBtcBalance_blockchain_info(const std::string& addr)
 {
-	if (g_CoinAddr_FirstChar != '1')
-	{
-		throw std::runtime_error("无法查询你的币种余额");
-	}
     bool must_confirmation = false;
     std::string explorer = "https://blockchain.info/q/addressbalance/" + addr;
     if(must_confirmation)
@@ -876,9 +874,46 @@ double WebQuery_GetMulSignBalance(const std::string& addr)
     std::string str = HttpGet(explorer + addr);
     if (str.empty())
     {
-		throw std::runtime_error("http query empty");
+        throw std::runtime_error("http query empty");
     }
     return double(atof(str.c_str())) / 100000000;
+}
+double WebQuery_GetLtcBalance_ltcBlockExplorer(const std::string& addr)
+{
+    std::string explorer = "http://ltc.block-explorer.com/csv/address/";
+    std::string str = HttpGet(explorer + addr);
+    if (str.empty())
+    {
+        throw std::runtime_error("http query empty");
+    }
+    if (str.substr(0, 3) != "Tx,")
+    {
+        throw std::runtime_error("invalid query 1");
+    }
+    size_t rp = str.rfind(',');
+    if (rp == std::string::npos)
+    {
+        throw std::runtime_error("invalid query 2");
+    }
+    str = str.substr(rp + 1);
+    return atof(str.c_str());
+}
+
+
+double WebQuery_GetMulSignBalance(const std::string& addr)
+{
+    if (g_CoinAddr_FirstChar == '1')
+    {
+        return WebQuery_GetBtcBalance_blockchain_info(addr);
+    }
+    else if (g_CoinAddr_FirstChar == 'L')
+    {
+        return WebQuery_GetLtcBalance_ltcBlockExplorer(addr);
+    }
+    else
+    {
+        throw std::runtime_error("无法查询你的币种余额");
+    }
 }
 
 CRpcHelper::txfrom_list WebQuery_GetTxFrom(const std::string& addr)
@@ -904,15 +939,15 @@ void CBtcSafeTransactionDlg::OnTimer(UINT_PTR nIDEvent)
 
                     if (GetDlgItem(IDC_EDIT_PUBKEY_1)->GetWindowTextLength() == 0)
                     {
-						std::string recvaddr = g_pRpcHelper->GetOrNewAccountAddress( g_pOption->PubAddrLabel );
-						if (recvaddr.size())
-						{
-							g_CoinAddr_FirstChar = recvaddr[0];
-						}
-						else
-						{
-							g_CoinAddr_FirstChar = 0;
-						}
+                        std::string recvaddr = g_pRpcHelper->GetOrNewAccountAddress( g_pOption->PubAddrLabel );
+                        if (recvaddr.size())
+                        {
+                            g_CoinAddr_FirstChar = recvaddr[0];
+                        }
+                        else
+                        {
+                            g_CoinAddr_FirstChar = 0;
+                        }
                         std::string PubKey1 = g_pRpcHelper->GetPubKey(recvaddr);
                         assert( PubKey1.size() );
                         SetDlgItemText(IDC_EDIT_PUBKEY_1, PubKey1.c_str());
@@ -961,7 +996,7 @@ void CBtcSafeTransactionDlg::OnTimer(UINT_PTR nIDEvent)
                     SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, "");
                     SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_COMMENT, "");
                     KillTimer(TimerID_RefreshMulSigAddrBalance);
-					g_CoinAddr_FirstChar = 0;
+                    g_CoinAddr_FirstChar = 0;
                 }
             }
 
@@ -1052,22 +1087,22 @@ void CBtcSafeTransactionDlg::OnBnClickedRadioModeSend2()
 
 void CBtcSafeTransactionDlg::OnBnClickedButtonWebView()
 {
-	std::string addr = GetWindowStlText( GetDlgItem(IDC_EDIT_P2PSIG_ADDR) );
-	if (addr.size())
-	{
-		if(g_CoinAddr_FirstChar == '1')
-		{
-			addr = "https://blockchain.info/address/" + addr;
-		}
-		else if (g_CoinAddr_FirstChar == 'L')
-		{
-			return;
-		}
-		else
-		{
-			return;
-		}
+    std::string addr = GetWindowStlText( GetDlgItem(IDC_EDIT_P2PSIG_ADDR) );
+    if (addr.size())
+    {
+        if(g_CoinAddr_FirstChar == '1')
+        {
+            addr = "https://blockchain.info/address/" + addr;
+        }
+        else if (g_CoinAddr_FirstChar == 'L')
+        {
+            addr = "http://ltc.block-explorer.com/address/" + addr;
+        }
+        else
+        {
+            return;
+        }
 
-		ShellExecute(0, "open", addr.c_str(), NULL, NULL, SW_SHOW);
-	}
+        ShellExecute(0, "open", addr.c_str(), NULL, NULL, SW_SHOW);
+    }
 }
