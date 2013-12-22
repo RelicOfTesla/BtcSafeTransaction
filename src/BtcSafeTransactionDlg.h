@@ -59,4 +59,5 @@ public:
 	afx_msg void OnBnClickedRadio1ModeRecv2();
 	afx_msg void OnBnClickedRadio1ModeRecv1();
 	afx_msg void OnBnClickedRadioModeSend2();
+	afx_msg void OnBnClickedButtonWebView();
 };

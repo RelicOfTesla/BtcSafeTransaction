@@ -22,7 +22,7 @@
 #define new DEBUG_NEW
 #endif
 
-#define RPC_SUPPORT_NOTFULL_MULSIG_TX_QUERY 1
+#define WALLET_SAVE_NOTFULL_MULSIG_TX 1
 
 enum
 {
@@ -155,6 +155,7 @@ BEGIN_MESSAGE_MAP(CBtcSafeTransactionDlg, CDialog)
     ON_BN_CLICKED(IDC_RADIO_MODE_RECV_2, &CBtcSafeTransactionDlg::OnBnClickedRadio1ModeRecv2)
     ON_BN_CLICKED(IDC_RADIO_MODE_RECV_1, &CBtcSafeTransactionDlg::OnBnClickedRadio1ModeRecv1)
     ON_BN_CLICKED(IDC_RADIO_MODE_SEND_2, &CBtcSafeTransactionDlg::OnBnClickedRadioModeSend2)
+	ON_BN_CLICKED(IDC_BUTTON_WEB_VIEW, &CBtcSafeTransactionDlg::OnBnClickedButtonWebView)
 END_MESSAGE_MAP()
 
 bool GetCertCheck(const std::string& filepath);
@@ -487,7 +488,8 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         {
             txfrom_list = WebQuery_GetTxFrom(p2psig_addr);
         }
-        double balance = 0;
+		std::string balance_type = "余额";
+		double balance = atof(GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_BALANCE)).c_str());
 
         if (txfrom_list.empty())
         {
@@ -497,6 +499,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
             {
                 throw std::logic_error("未找到交易数据，请更新blockchain");
             }
+			double recv_history = 0;
             std::list<std::string> strlist;
             // #DEFINE _SCL_SECURE_NO_WARNINGS
             boost::split(strlist, *pTxID, boost::is_any_of(",-;/|"));
@@ -507,44 +510,52 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
                 CRpcHelper::TxDataInfo query_tx = g_pRpcHelper->GetTransactionInfo_FromData(
                                                       g_pRpcHelper->GetRawTransaction_FromTxId(from.txid) );
                 from.vout = getvout(query_tx, p2psig_addr);
-                // assert(from.vout>=0);
+                // verify(from.vout>=0);
+#if !WALLET_SAVE_NOTFULL_MULSIG_TX
                 if (from.vout >= 0 && from.vout < query_tx.dest_list.size())
                 {
-                    balance += query_tx.dest_list[from.vout].value;
+                    recv_history += query_tx.dest_list[from.vout].value;
                 }
                 else
                 {
                     assert(0);
                 }
-
+#endif
                 txfrom_list.push_back(from);
             }
+#if !WALLET_SAVE_NOTFULL_MULSIG_TX
+			balance_type = "历史金额";
+			balance = recv_history;
+#endif
         }
         else
         {
-#if RPC_SUPPORT_NOTFULL_MULSIG_TX_QUERY
-            balance = atof(GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_BALANCE)).c_str());
-#else
+#if !WALLET_SAVE_NOTFULL_MULSIG_TX
+			double recv_history = 0;
             for (CRpcHelper::txfrom_list::iterator it = txfrom_list.begin(); it != txfrom_list.end(); ++it)
             {
                 CRpcHelper::TxDataInfo query_tx = g_pRpcHelper->GetTransactionInfo_FromData(
                                                       g_pRpcHelper->GetRawTransaction_FromTxId(from.txid) );
                 if (it->vout >= 0 && it->vout < query_tx.dest_list.size())
                 {
-                    balance += query_tx.dest_list[it->vout].value
+                    recv_history += query_tx.dest_list[it->vout].value
                 }
                 else
                 {
                     assert(0);
                 }
             }
+			balance_type = "历史金额";
+			balance = recv_history;
 #endif
         }
         if (txfrom_list.empty())
         {
             throw std::runtime_error("找不到相关数据，请更新数据库");
         }
+#if !WALLET_SAVE_NOTFULL_MULSIG_TX
 		SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, amount2str(balance).c_str());
+#endif
 
         std::string szAmount = GetWindowStlText(GetDlgItem(IDC_EDIT_SEND_AMOUNT));
 		double fAmount = atof(szAmount.c_str());
@@ -554,8 +565,9 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         }
         if ( fabs(fAmount - balance) > ZERO_AMOUNT )
         {
-            std::string sztip = str_format("你要收款的金额(%s)与担保地址余额(%s)不相同，确定继续收款么？",
+            std::string sztip = str_format("你要收款的金额(%s)与担保地址%s(%s)不相同，确定继续收款么？",
                                            szAmount.c_str(),
+										   balance_type.c_str(),
                                            amount2str(balance).c_str()
                                           );
             if( AfxMessageBox(sztip.c_str(), MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) == IDNO )
@@ -961,7 +973,7 @@ void CBtcSafeTransactionDlg::OnTimer(UINT_PTR nIDEvent)
                     std::string ShowMulSigAddr = GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR));
                     if (ShowMulSigAddr.size())
                     {
-#if RPC_SUPPORT_NOTFULL_MULSIG_TX_QUERY
+#if WALLET_SAVE_NOTFULL_MULSIG_TX
                         double balance = g_pRpcHelper->GetBalance_FromRecvAddr(ShowMulSigAddr);
 #else
                         double balance = WebQuery_GetMulSignBalance(ShowMulSigAddr);
@@ -1032,4 +1044,15 @@ void CBtcSafeTransactionDlg::OnBnClickedRadioModeSend2()
     g_pOption->MakeRecvMode = FALSE;
     UpdateDisableControl();
     SaveMyAppOption();
+}
+
+
+void CBtcSafeTransactionDlg::OnBnClickedButtonWebView()
+{
+	std::string addr = GetWindowStlText( GetDlgItem(IDC_EDIT_P2PSIG_ADDR) );
+	if (addr.size())
+	{
+		addr = "https://blockchain.info/address/" + addr;
+		ShellExecute(0, "open", addr.c_str(), NULL, NULL, SW_SHOW);
+	}
 }
