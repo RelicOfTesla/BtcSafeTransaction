@@ -778,7 +778,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonConfig()
 void CBtcSafeTransactionDlg::InsertLog(const std::string& str)
 {
     std::string sztip = GetWindowStlText(GetDlgItem(IDC_EDIT_LOGTIP));
-    sztip += str + "\r\n" + sztip;
+    sztip = str + "\r\n" + sztip;
     SetDlgItemText(IDC_EDIT_LOGTIP, sztip.c_str());
 
 }
