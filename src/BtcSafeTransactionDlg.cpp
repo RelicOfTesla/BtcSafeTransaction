@@ -22,7 +22,7 @@
 #define new DEBUG_NEW
 #endif
 
-#define WALLET_SAVE_NOTFULL_MULSIG_TX 1
+#define WALLET_SAVE_NOTFULL_MULSIG_TX 0
 
 enum
 {
@@ -538,10 +538,10 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
             for (CRpcHelper::txfrom_list::iterator it = txfrom_list.begin(); it != txfrom_list.end(); ++it)
             {
                 CRpcHelper::TxDataInfo query_tx = g_pRpcHelper->GetTransactionInfo_FromData(
-                                                      g_pRpcHelper->GetRawTransaction_FromTxId(from.txid) );
+                                                      g_pRpcHelper->GetRawTransaction_FromTxId(it->txid) );
                 if (it->vout >= 0 && it->vout < query_tx.dest_list.size())
                 {
-                    recv_history += query_tx.dest_list[it->vout].value
+                    recv_history += query_tx.dest_list[it->vout].value;
                 }
                 else
                 {
