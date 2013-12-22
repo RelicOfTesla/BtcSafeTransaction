@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BtcSafeTransaction", "BtcSafeTransaction.vcxproj", "{1B278A66-16A9-4596-B450-FCF46FEF58A7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1B278A66-16A9-4596-B450-FCF46FEF58A7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1B278A66-16A9-4596-B450-FCF46FEF58A7}.Debug|Win32.Build.0 = Debug|Win32
+		{1B278A66-16A9-4596-B450-FCF46FEF58A7}.Release|Win32.ActiveCfg = Release|Win32
+		{1B278A66-16A9-4596-B450-FCF46FEF58A7}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
