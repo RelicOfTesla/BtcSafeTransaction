@@ -192,6 +192,9 @@ BOOL CBtcSafeTransactionDlg::OnInitDialog()
     }
     UpdateDisableControl();
 
+	InsertLog("程序源码:https://github.com/laybor/BtcSafeTransaction");
+	InsertLog("作者网站:http://xingfeng.org");
+
     SetTimer(TimerID_CheckProcess, TimeInterval_CheckProcess, 0);
     SetTimer(TimerID_RefreshPubKey, TimeInterval_RefreshPubKey, 0);
     PostMessage(WM_TIMER, TimerID_CheckProcess, 0);
