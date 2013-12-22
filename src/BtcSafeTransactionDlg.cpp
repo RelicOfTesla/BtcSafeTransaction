@@ -1055,7 +1055,19 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonWebView()
 	std::string addr = GetWindowStlText( GetDlgItem(IDC_EDIT_P2PSIG_ADDR) );
 	if (addr.size())
 	{
-		addr = "https://blockchain.info/address/" + addr;
+		if(g_CoinAddr_FirstChar == '1')
+		{
+			addr = "https://blockchain.info/address/" + addr;
+		}
+		else if (g_CoinAddr_FirstChar == 'L')
+		{
+			return;
+		}
+		else
+		{
+			return;
+		}
+
 		ShellExecute(0, "open", addr.c_str(), NULL, NULL, SW_SHOW);
 	}
 }
