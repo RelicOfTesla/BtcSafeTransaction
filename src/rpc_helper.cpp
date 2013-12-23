@@ -202,6 +202,19 @@ CRpcHelper::txdata_str CRpcHelper::GetRawTransaction_FromTxId(const txid_str& tx
 	return ret;
 }
 
+double CRpcHelper::GetRecvHistoryVolume_FromTxFrom(const txfrom_info& from)
+{
+	CRpcHelper::TxDataInfo query_tx = GetTransactionInfo_FromData( from.txid );
+	if (from.vout >= 0 && from.vout < query_tx.dest_list.size())
+	{
+		return query_tx.dest_list[from.vout].value;
+	}
+	else
+	{
+		assert(0);
+		throw std::runtime_error("error from.vout index");
+	}
+}
 
 Json::Value CRpcHelper::DecodeRawTransactionJson(const txdata_str& txdata)
 {
@@ -247,8 +260,10 @@ CRpcHelper::txid_str CRpcHelper::SendAmount(const address_str& addr, double fAmo
 }
 
 
-CRpcHelper::txfrom_list CRpcHelper::GetRecvTransactionList(const address_str& addr)
+CRpcHelper::txfrom_list CRpcHelper::GetUnspentTransactionList_FromRecvAddr(const address_str& addr)
 {
+	// assert( !IsMulSigAddr(addr) ); // not support mulsig address
+
     Json::Value keys;
     keys.append(addr);
 

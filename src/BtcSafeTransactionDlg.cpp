@@ -22,7 +22,9 @@
 #define new DEBUG_NEW
 #endif
 
-#define WALLET_SAVE_NOTFULL_MULSIG_TX 0
+#define WALLET_SAVE_NOTFULL_MULSIG_TX	0
+#define RPC_CAN_QUERY_MULSIG_BALANCE	WALLET_SAVE_NOTFULL_MULSIG_TX
+#define RPC_CAN_MODIFY_LABEL	0
 
 enum
 {
@@ -386,16 +388,12 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonEditP2psigAddrLabel()
         }
 
         std::string comment = GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_COMMENT));
-#if 1
-        {
-            boost::algorithm::trim(comment);
-
-            MakePubKeyInfo makeinfo = GetMakePubKeyInfo();
-
-            g_pRpcHelper->SetMulSigAddrLabel(makeinfo.PubKey1, makeinfo.PubKey2, makeinfo.PubKey3, comment);
-        }
+        boost::algorithm::trim(comment);
+#if RPC_CAN_MODIFY_LABEL
+        g_pRpcHelper->SetLabel(p2psig_addr, comment);
 #else
-        //g_pRpcHelper->SetLabel(p2psig_addr, comment);
+        MakePubKeyInfo makeinfo = GetMakePubKeyInfo();
+        g_pRpcHelper->SetMulSigAddrLabel(makeinfo.PubKey1, makeinfo.PubKey2, makeinfo.PubKey3, comment);
 #endif
     }
     catch(std::exception& e)
@@ -434,11 +432,11 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonEditP2psigAddrLabelTempl()
                 comment += "/" + UiPubKey1;
             }
         }
-#if 1
+#if RPC_CAN_MODIFY_LABEL
+        g_pRpcHelper->SetLabel(p2psig_addr, comment);
+#else
         MakePubKeyInfo makeinfo = GetMakePubKeyInfo();
         g_pRpcHelper->SetMulSigAddrLabel(makeinfo.PubKey1, makeinfo.PubKey2, makeinfo.PubKey3, comment);
-#else
-        //g_pRpcHelper->SetLabel(p2psig_addr, comment);
 #endif
         SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_COMMENT, comment.c_str());
     }
@@ -460,7 +458,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonSelRecvAddr()
     }
 }
 
-size_t getvout(const CRpcHelper::TxDataInfo& txinfo, const std::string& addr)
+size_t search_vout(const CRpcHelper::TxDataInfo& txinfo, const std::string& addr)
 {
     for (size_t i = 0; i < txinfo.dest_list.size(); ++i)
     {
@@ -472,6 +470,54 @@ size_t getvout(const CRpcHelper::TxDataInfo& txinfo, const std::string& addr)
     }
     throw std::runtime_error("无法读取vout，找不到相关数据，请确认你的数据是最新的/请确认担保地址、买家/商家模式是对的");
 }
+
+void RemoveSpentTransaction(CRpcHelper::txfrom_list&)
+{
+    // not support, must make saved database.
+}
+
+CRpcHelper::txfrom_list GetUnspentTransactionList_FromMulSigAddr(const std::string& addr)
+{
+    CRpcHelper::txfrom_list txfrom_list = g_pRpcHelper->GetUnspentTransactionList_FromRecvAddr(addr);
+#if WALLET_SAVE_NOTFULL_MULSIG_TX
+    assert(txfrom_list.size());
+    return txfrom_list;
+#else
+    if (txfrom_list.empty())
+    {
+        txfrom_list = WebQuery_GetTxFrom(addr);
+    }
+
+    if (txfrom_list.empty())
+    {
+        shared_ptr<std::string> pTxID(new std::string);
+        InputDlg_DoModal(pTxID, "未找到最新交易数据，请手工输入[交易ID,交易ID]", false);
+        if (pTxID->empty())
+        {
+            throw std::logic_error("未找到交易数据，请更新blockchain");
+        }
+        std::list<std::string> strlist;
+        // #DEFINE _SCL_SECURE_NO_WARNINGS
+        boost::split(strlist, *pTxID, boost::is_any_of(",-;/| "));
+        for (std::list<std::string>::iterator it = strlist.begin(); it != strlist.end(); ++it)
+        {
+            CRpcHelper::txfrom_info from;
+            from.txid = boost::algorithm::trim_copy(*it);
+            if (from.txid.empty())
+            {
+                continue;
+            }
+            CRpcHelper::TxDataInfo query_tx = g_pRpcHelper->GetTransactionInfo_FromData( from.txid );
+            from.vout = search_vout(query_tx, addr);
+            // verify(from.vout>=0);
+            txfrom_list.push_back(from);
+        }
+        RemoveSpentTransaction(txfrom_list);
+    }
+#endif
+    return txfrom_list;
+}
+
 
 void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
 {
@@ -489,80 +535,27 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
             throw std::logic_error("收款地址错误");
         }
 
-        CRpcHelper::txfrom_list txfrom_list = g_pRpcHelper->GetRecvTransactionList(p2psig_addr);
-        if (txfrom_list.empty())
-        {
-            txfrom_list = WebQuery_GetTxFrom(p2psig_addr);
-        }
-        std::string balance_type = "余额";
-        double balance = atof(GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_BALANCE)).c_str());
-
-        if (txfrom_list.empty())
-        {
-            shared_ptr<std::string> pTxID(new std::string);
-            InputDlg_DoModal(pTxID, "未找到最新交易数据，请手工输入[交易ID,交易ID]", false);
-            if (pTxID->empty())
-            {
-                throw std::logic_error("未找到交易数据，请更新blockchain");
-            }
-            double recv_history = 0;
-            std::list<std::string> strlist;
-            // #DEFINE _SCL_SECURE_NO_WARNINGS
-            boost::split(strlist, *pTxID, boost::is_any_of(",-;/|"));
-            for (std::list<std::string>::iterator it = strlist.begin(); it != strlist.end(); ++it)
-            {
-                CRpcHelper::txfrom_info from;
-                from.txid = boost::algorithm::trim_copy(*it);
-                CRpcHelper::TxDataInfo query_tx = g_pRpcHelper->GetTransactionInfo_FromData(
-                                                      g_pRpcHelper->GetRawTransaction_FromTxId(from.txid) );
-                from.vout = getvout(query_tx, p2psig_addr);
-                // verify(from.vout>=0);
-#if !WALLET_SAVE_NOTFULL_MULSIG_TX
-                if (from.vout >= 0 && from.vout < query_tx.dest_list.size())
-                {
-                    recv_history += query_tx.dest_list[from.vout].value;
-                }
-                else
-                {
-                    assert(0);
-                }
-#endif
-                txfrom_list.push_back(from);
-            }
-#if !WALLET_SAVE_NOTFULL_MULSIG_TX
-            balance_type = "历史金额";
-            balance = recv_history;
-#endif
-        }
-        else
-        {
-#if !WALLET_SAVE_NOTFULL_MULSIG_TX
-            double recv_history = 0;
-            for (CRpcHelper::txfrom_list::iterator it = txfrom_list.begin(); it != txfrom_list.end(); ++it)
-            {
-                CRpcHelper::TxDataInfo query_tx = g_pRpcHelper->GetTransactionInfo_FromData(
-                                                      g_pRpcHelper->GetRawTransaction_FromTxId(it->txid) );
-                if (it->vout >= 0 && it->vout < query_tx.dest_list.size())
-                {
-                    recv_history += query_tx.dest_list[it->vout].value;
-                }
-                else
-                {
-                    assert(0);
-                }
-            }
-            balance_type = "历史金额";
-            balance = recv_history;
-#endif
-        }
-        if (txfrom_list.empty())
+        CRpcHelper::txfrom_list fromlist = GetUnspentTransactionList_FromMulSigAddr(p2psig_addr);
+        if (fromlist.empty())
         {
             throw std::runtime_error("找不到相关数据，请更新数据库");
         }
-#if !WALLET_SAVE_NOTFULL_MULSIG_TX
+
+        // ------ Begin balance Check
+        std::string balance_type = "余额";
+        double balance = atof(GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_BALANCE)).c_str());
+#if !RPC_CAN_QUERY_MULSIG_BALANCE
+        double recv_history = 0;
+        for (CRpcHelper::txfrom_list::iterator it = fromlist.begin(); it != fromlist.end(); ++it)
+        {
+            recv_history += g_pRpcHelper->GetRecvHistoryVolume_FromTxFrom(*it);
+        }
+#if WALLET_SAVE_NOTFULL_MULSIG_TX
+        balance_type = "历史金额";
+#endif
+        balance = recv_history;
         SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, amount2str(balance).c_str());
 #endif
-
         std::string szAmount = GetWindowStlText(GetDlgItem(IDC_EDIT_SEND_AMOUNT));
         double fAmount = atof(szAmount.c_str());
         if ( fAmount <= MIN_SEND_AMOUNT )
@@ -572,15 +565,16 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         if ( fabs(fAmount - balance) > ZERO_AMOUNT )
         {
             std::string sztip = str_format("你要收款的金额(%s)与担保地址%s(%s)不相同，确定继续收款么？",
-                                           szAmount.c_str(),
-                                           balance_type.c_str(),
-                                           amount2str(balance).c_str()
-                                          );
+                                    szAmount.c_str(),
+                                    balance_type.c_str(),
+                                    amount2str(balance).c_str()
+                                );
             if( AfxMessageBox(sztip.c_str(), MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) == IDNO )
             {
                 return;
             }
         }
+        // ------
 
         CRpcHelper::payout_list paylist;
         CRpcHelper::payout_record pay;
@@ -620,7 +614,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
                 }
             }
         }
-        std::string txdata = g_pRpcHelper->CreateRawTransaction(txfrom_list, paylist);
+        std::string txdata = g_pRpcHelper->CreateRawTransaction(fromlist, paylist);
         try
         {
             txdata = g_pRpcHelper->SignRawTransaction(txdata);
@@ -678,7 +672,7 @@ bool VerifyTxData(const std::string& txdata)
     for (auto it_s = txinfo.src_txid_list.begin(); it_s != txinfo.src_txid_list.end(); ++it_s)
     {
         CRpcHelper::txfrom_info& rv = *it_s;
-        CRpcHelper::TxDataInfo src = g_pRpcHelper->GetTransactionInfo_FromData( g_pRpcHelper->GetRawTransaction_FromTxId(rv.txid) );
+        CRpcHelper::TxDataInfo src = g_pRpcHelper->GetTransactionInfo_FromTxId( rv.txid );
         if (rv.vout >= 0 && rv.vout < src.dest_list.size())
         {
             const CRpcHelper::TxDataInfo::TxDestInfo& info = src.dest_list[rv.vout];
@@ -702,18 +696,16 @@ bool VerifyTxData(const std::string& txdata)
     {
         const std::string& s = *it;
         from_addr_str += s + "\r\n";
-        if (s.size())
+        if ( !IsMulSigAddr(s) )
         {
-            if (s[0] != '3' && s[0] != '2')
-            {
-                except_str += s + "\r\n";
-            }
+			except_str += s + "\r\n";
         }
     }
     if (except_str.size())
     {
         std::string sztip = str_format(
-                                "警告，发现异常！\n正常应该是从担保地址转账出去的，现在发现疑似要从非担保地址地址%s 转账出去，确认还要继续？",
+                                "警告，发现异常！\n"
+                                "正常应该是从担保地址转账出去的，现在发现疑似要从非担保地址地址%s 转账出去，确认还要继续？",
                                 except_str.c_str()
                             );
         if (AfxMessageBox(sztip.c_str(), MB_ICONHAND | MB_YESNO | MB_DEFBUTTON2) == IDNO)

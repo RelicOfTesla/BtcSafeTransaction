@@ -13,3 +13,12 @@ std::string GetWindowStlText(class CWnd*);
 
 
 std::string amount2str(double v);
+
+inline BOOL IsMulSigAddr(const std::string& addr)
+{
+	if (addr.size())
+	{
+		return addr[0] == '3' || addr[0] =='2';
+	}
+	return FALSE;
+}

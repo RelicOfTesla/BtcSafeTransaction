@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "BtcSafeTransaction.h"
-#include "src/InputDlg.h"
+#include "InputDlg.h"
 #include "util.h"
 
 //////////////////////////////////////////////////////////////////////////

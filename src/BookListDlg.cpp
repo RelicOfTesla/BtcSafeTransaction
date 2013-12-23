@@ -3,8 +3,9 @@
 
 #include "stdafx.h"
 #include "BtcSafeTransaction.h"
-#include "src/BookListDlg.h"
+#include "BookListDlg.h"
 #include "rpc_helper.hpp"
+#include "util.h"
 // CBookListDlg ¶Ô»°¿ò
 //////////////////////////////////////////////////////////////////////////
 extern shared_ptr<CRpcHelper> g_pRpcHelper;
@@ -62,12 +63,9 @@ BOOL CBookListDlg::OnInitDialog()
 	{
 		if (m_HideMulSignAddress)
 		{
-			if (it->first.size())
+			if ( IsMulSigAddr(it->first) )
 			{
-				if (*it->first.begin() == '3') // is sign address
-				{
-					continue;
-				}
+				continue;
 			}
 		}
 		int nItem = pList->InsertItem(pList->GetItemCount(), "");

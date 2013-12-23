@@ -125,7 +125,7 @@ public:
 
     txid_str SendAmount(const address_str& addr, double amount);
 
-    txfrom_list GetRecvTransactionList(const address_str& addr);
+    txfrom_list GetUnspentTransactionList_FromRecvAddr(const address_str& addr);
 
     txdata_str CreateRawTransaction(const txfrom_list& txlist, const payout_list& paylist);
 
@@ -136,6 +136,12 @@ public:
     TxDataInfo GetTransactionInfo_FromData(const txdata_str& txdata);
 	txdata_str GetRawTransaction_FromTxId(const txid_str& txid);
 
+	double GetRecvHistoryVolume_FromTxFrom(const txfrom_info& from);
+public:
+	TxDataInfo GetTransactionInfo_FromTxId(const txid_str& txid)
+	{
+		return GetTransactionInfo_FromData( GetRawTransaction_FromTxId(txid) );
+	}
 protected:
 
     address_str NewAddress(const label_str& label);

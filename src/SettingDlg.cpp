@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "BtcSafeTransaction.h"
-#include "src/SettingDlg.h"
+#include "SettingDlg.h"
 #include "option.h"
 #include "util.h"
 #include <sdk/util/AppPath.hpp>
