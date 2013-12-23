@@ -24,6 +24,8 @@
 
 #define WALLET_SAVE_NOTFULL_MULSIG_TX	0
 #define RPC_CAN_QUERY_MULSIG_BALANCE	WALLET_SAVE_NOTFULL_MULSIG_TX
+#define RPC_CAN_TRACE_MULSIG_SPENT		0
+
 #define RPC_CAN_MODIFY_LABEL	0
 
 enum
@@ -473,6 +475,10 @@ size_t search_vout(const CRpcHelper::TxDataInfo& txinfo, const std::string& addr
 
 void RemoveSpentTransaction(CRpcHelper::txfrom_list&)
 {
+#if RPC_CAN_TRACE_MULSIG_SPENT
+#else
+	printf("warning: can't get mulsig spent transaction");
+#endif
     // not support, must make saved database.
 }
 
@@ -550,7 +556,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         {
             recv_history += g_pRpcHelper->GetRecvHistoryVolume_FromTxFrom(*it);
         }
-#if WALLET_SAVE_NOTFULL_MULSIG_TX
+#if !RPC_CAN_TRACE_MULSIG_SPENT
         balance_type = "历史金额";
 #endif
         balance = recv_history;
@@ -713,7 +719,7 @@ bool VerifyTxData(const std::string& txdata)
             return false;
         }
     }
-    std::string sztip = str_format("你确认要从%s，转币%s给对方么？", from_addr_str.c_str(), amount2str(to_amount).c_str());
+    std::string sztip = str_format("你确认要从%s，转币%s给对方么？转完后就退不了款的哦!", from_addr_str.c_str(), amount2str(to_amount).c_str());
     if (AfxMessageBox(sztip.c_str(), MB_YESNO | MB_DEFBUTTON2) == IDNO)
     {
         return false;
