@@ -1,33 +1,40 @@
 #pragma once
 
-#define _MACRO_STR_ADD(a,b)	a#b
+#if _DLL
+#define _THREAD_TYPE_NAME "MD"
+#define _STATIC_TYPE_NAME ""
+#else
+#define _THREAD_TYPE_NAME "MT"
+#define _STATIC_TYPE_NAME "s"
+#endif
 
 #if _DEBUG
-#define DEBUG_EXT_STR(x)	_MACRO_STR_ADD(x, "D")
+#define _DEBUG_TYPE_EXT "d"
 #else
-#define DEBUG_EXT_STR(x)	x
+#define _DEBUG_TYPE_EXT ""
 #endif
 
-#if _DLL
-#define CRT_NAME(x)		DEBUG_EXT_STR(_MACRO_STR_ADD(x, "md"))
-#else
-#define CRT_NAME(x)		DEBUG_EXT_STR(_MACRO_STR_ADD(x, "mt"))
-#endif
+#define LIB_NAME_M(x)		x _THREAD_TYPE_NAME _DEBUG_TYPE_EXT ".lib"
+#define LIB_NAME_S(x)		x _STATIC_TYPE_NAME _DEBUG_TYPE_EXT ".lib"
+#define LIB_NAME_D(x)		x _DEBUG_TYPE_EXT ".lib"
 
-#define LIB_NAME_TH(x)		_MACRO_STR_ADD(CRT_NAME(x), ".lib")
-#define LIB_NAME(x)			_MACRO_STR_ADD(DEBUG_EXT_STR(x), ".lib")
-
-
-#if _DLL
-#define NODEFAULT_LIB_CRT	_MACRO_STR_ADD("/nodefaultlib:","libcmt")
-#else
-#define NODEFAULT_LIB_CRT	_MACRO_STR_ADD("/nodefaultlib:","msvcrt")
-#endif
 
 #ifndef AUTO_LIB_CRT
 #define AUTO_LIB_CRT 0
 #endif
 
 #if AUTO_LIB_CRT
-#pragma comment(linker, NODEFAULT_LIB_CRT)
+
+#if _DLL
+#pragma comment(linker, "/nodefaultlib:libcmt.lib")
+#pragma comment(linker, "/nodefaultlib:libcpmt.lib")
+
+#pragma comment(linker, "/nodefaultlib:libcmtd.lib")
+#pragma comment(linker, "/nodefaultlib:libcpmtd.lib")
+#else
+#pragma comment(linker, "/nodefaultlib:msvcrt.lib")
+#pragma comment(linker, "/nodefaultlib:msvcrtd.lib")
+#endif
+
+
 #endif

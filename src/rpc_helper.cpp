@@ -22,7 +22,7 @@ CRpcHelper::pubkey_str CRpcHelper::GetPubKey(const address_str& recvaddr)
     Json::Value param;
     param.append(recvaddr);
     Json::Value ret = json_from_string( m_rpc->Send("validateaddress", param) );
-    return ret["pubkey"].asString();
+    return pubkey_str( ret["pubkey"].asString() );
 }
 
 CRpcHelper::address_str CRpcHelper::NewMulSigAddr(
@@ -43,7 +43,7 @@ CRpcHelper::address_str CRpcHelper::NewMulSigAddr(
 
     mini_booklist bakbook = GetMiniBookList();
 
-    std::string ret = m_rpc->Send("addmultisigaddress", args);
+    address_str ret = address_str( m_rpc->Send("addmultisigaddress", args) );
 
     label_str old_label = bakbook[ret];
     if (old_label.size())
@@ -89,7 +89,7 @@ CRpcHelper::mini_booklist CRpcHelper::GetMiniBookList()
     Json::Value jv = json_from_string( m_rpc->Send("listreceivedbyaddress", args) );
     for (Json::ValueIterator it = jv.begin(); it != jv.end(); ++it)
     {
-		const Json::Value& rv = *it;
+        const Json::Value& rv = *it;
         bool ok = result.insert( std::make_pair(rv["address"].asString(), rv["account"].asString()) ).second;
         assert(ok);
 
@@ -129,11 +129,11 @@ CRpcHelper::full_booklist CRpcHelper::GetFullBookList()
                 {
                     assert(rv[1].isDouble());
                     addr_ext_info nv;
-                    address_str addr = rv[UINT(0)].asString();
+                    address_str addr = address_str( rv[UINT(0)].asString() );
                     nv.balance = rv[1].asDouble();
                     if (rv.size() >= 3)
                     {
-                        nv.label = rv[2].asString();
+                        nv.label = label_str( rv[2].asString() );
                     }
                     bool ok = result.insert( std::make_pair(addr, nv) ).second;
                     assert(ok);
@@ -182,7 +182,7 @@ CRpcHelper::label_str CRpcHelper::GetLabel(const address_str& addr)
     Json::Value args;
     args.append(addr);
     std::string ret = m_rpc->Send("getaccount", args);
-    return ret;
+    return label_str(ret);
 }
 
 void CRpcHelper::DupLabel(const address_str& addr, const label_str& label)
@@ -196,32 +196,39 @@ void CRpcHelper::DupLabel(const address_str& addr, const label_str& label)
 
 CRpcHelper::txdata_str CRpcHelper::GetRawTransaction_FromTxId(const txid_str& txid)
 {
-	Json::Value args;
-	args.append(txid);
-	std::string ret = m_rpc->Send("getrawtransaction", args);
-	return ret;
+    Json::Value args;
+    args.append(txid);
+    std::string ret = m_rpc->Send("getrawtransaction", args);
+    return txdata_str(ret);
 }
 
-double CRpcHelper::GetRecvHistoryVolume_FromTxFrom(const txfrom_info& from)
+void CRpcHelper::SetTxFee(double fee)
 {
-	CRpcHelper::TxDataInfo query_tx = GetTransactionInfo_FromData( from.txid );
-	if (from.vout >= 0 && from.vout < query_tx.dest_list.size())
-	{
-		return query_tx.dest_list[from.vout].value;
-	}
-	else
-	{
-		assert(0);
-		throw std::runtime_error("error from.vout index");
-	}
+    Json::Value args;
+    args.append(fee);
+    std::string ret = m_rpc->Send("settxfee", args);
+}
+
+double CRpcHelper::GetRecvHistoryVolume_FromTxFrom(const unk_txfrom_info& from)
+{
+    CRpcHelper::TxDataInfo query_tx = GetTransactionInfo_FromTxId( from.txid );
+    if (from.vout >= 0 && from.vout < query_tx.dest_list.size())
+    {
+        return query_tx.dest_list[from.vout].value;
+    }
+    else
+    {
+        assert(0);
+        throw std::runtime_error("error from.vout index");
+    }
 }
 
 Json::Value CRpcHelper::DecodeRawTransactionJson(const txdata_str& txdata)
 {
-	Json::Value args;
-	args.append(txdata);
-	std::string ret = m_rpc->Send("decoderawtransaction", args);
-	return json_from_string(ret);
+    Json::Value args;
+    args.append(txdata);
+    std::string ret = m_rpc->Send("decoderawtransaction", args);
+    return json_from_string(ret);
 }
 
 
@@ -231,13 +238,13 @@ CRpcHelper::address_str CRpcHelper::GetOrNewAccountAddress(const label_str& labe
     Json::Value args;
     args.append(label);
     std::string ret = m_rpc->Send("getaccountaddress", args);
-    return ret;
+    return address_str(ret);
 #else
     if (GetAddrList_FromLabel(label).empty())
     {
         ret = NewAddress(label);
     }
-    return ret;
+    return address_str(ret);
 #endif
 
 }
@@ -256,13 +263,13 @@ CRpcHelper::txid_str CRpcHelper::SendAmount(const address_str& addr, double fAmo
     args.append(addr);
     args.append(fAmount);
     std::string txid = m_rpc->Send("sendtoaddress", args);
-    return txid;
+    return txid_str(txid);
 }
 
 
-CRpcHelper::txfrom_list CRpcHelper::GetUnspentTransactionList_FromRecvAddr(const address_str& addr)
+CRpcHelper::unspent_info CRpcHelper::GetUnspentData_FromRecvAddr(const address_str& addr)
 {
-	// assert( !IsMulSigAddr(addr) ); // not support mulsig address
+    // assert( !IsMulSigAddr(addr) ); // not support mulsig address
 
     Json::Value keys;
     keys.append(addr);
@@ -273,28 +280,30 @@ CRpcHelper::txfrom_list CRpcHelper::GetUnspentTransactionList_FromRecvAddr(const
     args.append(keys);
     const Json::Value jv = json_from_string( m_rpc->Send("listunspent", args) );
 
-    txfrom_list result;
+    unspent_info result;
     for (Json::Value::const_iterator it = jv.begin(); it != jv.end(); ++it)
     {
         const Json::Value& rv = *it;
         if( rv["address"] == addr )
         {
-            txfrom_info nv;
-            nv.txid = rv["txid"].asString();
+            unspent_info::unspent_txlist::value_type nv;
+            nv.txid = txid_str( rv["txid"].asString() );
             nv.vout = rv["vout"].asInt();
-            result.push_back(nv);
+
+            result.txlist.push_back(nv);
+            result.total += rv["amount"].asDouble();
         }
     }
     return result;
 }
 
-CRpcHelper::txdata_str CRpcHelper::CreateRawTransaction(const txfrom_list& txfromlist, const payout_list& paylist)
+CRpcHelper::txdata_str CRpcHelper::CreateRawTransaction(const unspent_info::unspent_txlist& txfromlist, const payout_list& paylist)
 {
 
     Json::Value jv_txlist;
-    for (txfrom_list::const_iterator it = txfromlist.begin(); it != txfromlist.end(); ++it)
+    for (auto it = txfromlist.begin(); it != txfromlist.end(); ++it)
     {
-        const txfrom_info& rv = *it;
+        auto& rv = *it;
         Json::Value nv;
         nv["txid"] = rv.txid;
         nv["vout"] = rv.vout;
@@ -313,7 +322,7 @@ CRpcHelper::txdata_str CRpcHelper::CreateRawTransaction(const txfrom_list& txfro
     args.append(jv_payobj);
 
     std::string txdata = m_rpc->Send("createrawtransaction", args);
-    return txdata;
+    return txdata_str( txdata );
 }
 
 CRpcHelper::txdata_str CRpcHelper::SignRawTransaction(const txdata_str& txdata)
@@ -321,7 +330,7 @@ CRpcHelper::txdata_str CRpcHelper::SignRawTransaction(const txdata_str& txdata)
     Json::Value args;
     args.append(txdata);
     Json::Value jv = json_from_string( m_rpc->Send("signrawtransaction", args) );
-    return jv["hex"].asString();
+    return txdata_str( jv["hex"].asString() );
 }
 
 void CRpcHelper::SendRawTransaction(const txdata_str& txdata)
@@ -335,35 +344,35 @@ void CRpcHelper::SendRawTransaction(const txdata_str& txdata)
 CRpcHelper::TxDataInfo CRpcHelper::GetTransactionInfo_FromData(const txdata_str& txdata)
 {
     TxDataInfo result;
-	Json::Value jv = DecodeRawTransactionJson(txdata);
-	
-	{
-		const Json::Value& vin = jv["vin"];
-		for (Json::Value::const_iterator it_i = vin.begin(); it_i != vin.end(); ++it_i)
-		{
-			const Json::Value& rv = *it_i;
-			txfrom_info from;
-			from.txid = rv["txid"].asString();
-			from.vout = rv["n"].asUInt();
-			result.src_txid_list.push_back(from);
-		}
-	}
+    Json::Value jv = DecodeRawTransactionJson(txdata);
 
-	{
-		const Json::Value& vout = jv["vout"];
-		for (Json::Value::const_iterator it_o = vout.begin(); it_o != vout.end(); ++it_o)
-		{
-			const Json::Value& rv = *it_o;
-			TxDataInfo::TxDestInfo dst;
-			dst.value = rv["value"].asDouble();
-			const Json::Value& addrlist = rv["scriptPubKey"]["addresses"];
-			for (Json::Value::const_iterator it_a = addrlist.begin(); it_a != addrlist.end(); ++it_a)
-			{
-				dst.addr.insert( (*it_a).asString() );
-			}
-			result.dest_list.push_back(dst);
-		}
-	}
+    {
+        const Json::Value& vin = jv["vin"];
+        for (Json::Value::const_iterator it_i = vin.begin(); it_i != vin.end(); ++it_i)
+        {
+            const Json::Value& rv = *it_i;
+            unk_txfrom_info from;
+            from.txid = txid_str( rv["txid"].asString() );
+            from.vout = rv["n"].asUInt();
+            result.src_txid_list.push_back(from);
+        }
+    }
+
+    {
+        const Json::Value& vout = jv["vout"];
+        for (Json::Value::const_iterator it_o = vout.begin(); it_o != vout.end(); ++it_o)
+        {
+            const Json::Value& rv = *it_o;
+            TxDataInfo::TxDestInfo dst;
+            dst.value = rv["value"].asDouble();
+            const Json::Value& addrlist = rv["scriptPubKey"]["addresses"];
+            for (Json::Value::const_iterator it_a = addrlist.begin(); it_a != addrlist.end(); ++it_a)
+            {
+                dst.addr.insert( (*it_a).asString() );
+            }
+            result.dest_list.push_back(dst);
+        }
+    }
 
     return result;
 }
@@ -373,7 +382,7 @@ CRpcHelper::address_str CRpcHelper::NewAddress(const label_str& label)
     Json::Value args;
     args.append(label);
     std::string ret = m_rpc->Send("getnewaddress", args);
-    return ret;
+    return address_str( ret );
 }
 
 
@@ -398,17 +407,17 @@ CRpcHelper::str_unique_list CRpcHelper::GetAddressList()
     str_unique_list result;
 
 #if 1
-	Json::Value args;
-	args.append(MAX_CONF);
-	args.append(true);
+    Json::Value args;
+    args.append(MAX_CONF);
+    args.append(true);
 
-	Json::Value jv = json_from_string( m_rpc->Send("listreceivedbyaddress", args) );
-	for (Json::ValueIterator it = jv.begin(); it != jv.end(); ++it)
-	{
-		const Json::Value& rv = *it;
-		bool ok = result.insert( rv["address"].asString() ).second;
-		assert(ok);
-	}
+    Json::Value jv = json_from_string( m_rpc->Send("listreceivedbyaddress", args) );
+    for (Json::ValueIterator it = jv.begin(); it != jv.end(); ++it)
+    {
+        const Json::Value& rv = *it;
+        bool ok = result.insert( rv["address"].asString() ).second;
+        assert(ok);
+    }
 #else
     str_unique_list labels = GetLabelList();
     for (str_unique_list::const_iterator l_it = labels.begin(); l_it != labels.end(); ++l_it)

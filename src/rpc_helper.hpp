@@ -40,16 +40,25 @@ enum RPCErrorCode
     RPC_WALLET_ENCRYPTION_FAILED    = -16, // Failed to encrypt the wallet
     RPC_WALLET_ALREADY_UNLOCKED     = -17, // Wallet is already unlocked
 };
+
+template<int>
+struct string_i : std::string
+{
+	string_i(){}
+	explicit string_i(const std::string& s ) : std::string(s)
+	{}
+};
+
 class CRpcHelper
 {
 protected:
     shared_ptr<CCoinJsonRpc> m_rpc;
 public:
-    typedef std::string address_str;
-    typedef std::string label_str;
-    typedef std::string pubkey_str;
-    typedef std::string txid_str;
-    typedef std::string txdata_str;
+    typedef string_i<1> address_str;
+    typedef string_i<2> label_str;
+    typedef string_i<3> pubkey_str;
+    typedef string_i<4> txid_str;
+    typedef string_i<5> txdata_str;
 
     typedef std::set<std::string> str_unique_list;
     typedef std::map<address_str, label_str> mini_booklist;
@@ -64,15 +73,28 @@ public:
     };
     typedef std::map<address_str, addr_ext_info> full_booklist;
 
-    struct txfrom_info
-    {
-        txid_str txid;
-        size_t vout;
+	struct unk_txfrom_info
+	{
+		txid_str txid;
+		size_t vout;
 
-        txfrom_info() : vout(0)
-        {}
-    };
-    typedef std::list<txfrom_info> txfrom_list;
+		unk_txfrom_info() : vout(0)
+		{}
+	};
+	typedef std::list<unk_txfrom_info> unk_txfrom_list;
+
+
+	struct unspent_info
+	{
+		typedef unk_txfrom_list unspent_txlist;
+		//////////////////////////////////////////////////////////////////////////
+		double total;
+		unspent_txlist txlist;
+
+		unspent_info() : total(0)
+		{}
+	};
+
 
     struct payout_record
     {
@@ -96,7 +118,7 @@ public:
 
 		typedef std::vector<TxDestInfo> TxDestList;
 
-		txfrom_list src_txid_list;
+		unk_txfrom_list src_txid_list;
 		TxDestList dest_list;
     };
 public:
@@ -108,7 +130,7 @@ public:
 
     bool IsRpcCanConnected();
 
-    pubkey_str GetPubKey(const pubkey_str& recvaddr);
+    pubkey_str GetPubKey(const address_str& recvaddr);
     address_str NewMulSigAddr(const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3);
 
     void SetMulSigAddrLabel(const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3,
@@ -125,9 +147,9 @@ public:
 
     txid_str SendAmount(const address_str& addr, double amount);
 
-    txfrom_list GetUnspentTransactionList_FromRecvAddr(const address_str& addr);
+    unspent_info GetUnspentData_FromRecvAddr(const address_str& addr);
 
-    txdata_str CreateRawTransaction(const txfrom_list& txlist, const payout_list& paylist);
+    txdata_str CreateRawTransaction(const unspent_info::unspent_txlist& txlist, const payout_list& paylist);
 
     txdata_str SignRawTransaction(const txdata_str& txdata);
 
@@ -136,13 +158,14 @@ public:
     TxDataInfo GetTransactionInfo_FromData(const txdata_str& txdata);
 	txdata_str GetRawTransaction_FromTxId(const txid_str& txid);
 
-	double GetRecvHistoryVolume_FromTxFrom(const txfrom_info& from);
+	void SetTxFee(double fee);
 public:
 	TxDataInfo GetTransactionInfo_FromTxId(const txid_str& txid)
 	{
 		return GetTransactionInfo_FromData( GetRawTransaction_FromTxId(txid) );
 	}
 protected:
+	double GetRecvHistoryVolume_FromTxFrom(const unk_txfrom_info& from);
 
     address_str NewAddress(const label_str& label);
     str_unique_list GetLabelList();

@@ -52,6 +52,20 @@ UINT JsonOptGet_UINT(Json::Value& jv, const char* name, const UINT& def)
 }
 
 
+double JsonOptGet_double(Json::Value& jv, const char* name, const double& def)
+{
+	try
+	{
+		Json::Value& cv = jv[name];
+		if ( !cv.empty() )
+		{
+			return cv.asDouble();
+		}
+	}
+	catch(std::exception&)
+	{}
+	return def;
+}
 std::string GetWindowStlText(class CWnd* pWnd)
 {
 	std::string result;

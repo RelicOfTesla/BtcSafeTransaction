@@ -30,9 +30,9 @@ void StartProcess_FromOption(shared_ptr<CAppOption> opt)
 
 	args += str_format(" -server -rpcuser=%s -rpcpassword=%s -rpcport=%d",
 		opt->LoginUser.c_str(), opt->LoginPass.c_str(), opt->Port);
-	args += str_format(" \"-datadir=%s\"", GetFullFilePath(opt->DB_DIR).c_str());
+	args += str_format(" \"-datadir=%s\" ", GetFullFilePath(opt->DB_DIR).c_str());
 
-	args += opt->StartExtern;
+	args += " " + opt->StartExtern;
 
 	STARTUPINFO si = {0};
 	si.dwXSize = sizeof(si);

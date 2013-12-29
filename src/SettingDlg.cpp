@@ -54,12 +54,18 @@ void CSettingDlg::OnBnClickedOk()
     g_pOption->LoginUser = GetWindowStlText(GetDlgItem(IDC_EDIT_SET_USER));
     g_pOption->LoginPass = GetWindowStlText(GetDlgItem(IDC_EDIT_SET_PASS));
     g_pOption->StartExtern = GetWindowStlText(GetDlgItem(IDC_EDIT_SET_EXEC_PARAM));
-    g_pOption->PubAddrLabel = GetWindowStlText(GetDlgItem(IDC_EDIT_SET_PUBADDR_LABEL));
+	g_pOption->FileName_UIApp = GetWindowStlText(GetDlgItem(IDC_COMBO_SET_FNAME1));
+	g_pOption->FileName_ConsApp = GetWindowStlText(GetDlgItem(IDC_COMBO_SET_FNAME2));
+	g_pOption->UseUIApp = ( (CButton*)(GetDlgItem(IDC_CHECK_IS_UI_APP)) )->GetCheck();
+
+	g_pOption->PubAddrLabel = GetWindowStlText(GetDlgItem(IDC_EDIT_SET_PUBADDR_LABEL));
 	g_pOption->DonateAuthor = ( (CButton*)(GetDlgItem(IDC_CHECK_DONATE)) )->GetCheck();
 	boost::algorithm::trim(g_pOption->IP);
 	boost::algorithm::trim(g_pOption->LoginUser);
 	boost::algorithm::trim(g_pOption->LoginPass);
 	boost::algorithm::trim(g_pOption->PubAddrLabel);
+	boost::algorithm::trim(g_pOption->FileName_UIApp);
+	boost::algorithm::trim(g_pOption->FileName_ConsApp);
     SaveMyAppOption();
 
     // TODO: 在此添加控件通知处理程序代码
@@ -76,9 +82,17 @@ BOOL CSettingDlg::OnInitDialog()
     SetDlgItemInt(IDC_EDIT_SET_PORT, g_pOption->Port);
     SetDlgItemText(IDC_EDIT_SET_USER, g_pOption->LoginUser.c_str());
     SetDlgItemText(IDC_EDIT_SET_PASS, g_pOption->LoginPass.c_str());
-    SetDlgItemText(IDC_EDIT_SET_EXEC_PARAM, g_pOption->StartExtern.c_str());
-    SetDlgItemText(IDC_EDIT_SET_PUBADDR_LABEL, g_pOption->PubAddrLabel.c_str());
 
+	((CComboBox*)GetDlgItem(IDC_COMBO_SET_FNAME1))->AddString("Bitcoin-qt.exe");
+	((CComboBox*)GetDlgItem(IDC_COMBO_SET_FNAME1))->AddString("Litecoin-qt.exe");
+	SetDlgItemText(IDC_COMBO_SET_FNAME1, g_pOption->FileName_UIApp.c_str());
+	((CComboBox*)GetDlgItem(IDC_COMBO_SET_FNAME2))->AddString("bitcoind.exe");
+	((CComboBox*)GetDlgItem(IDC_COMBO_SET_FNAME2))->AddString("litecoind.exe");
+	SetDlgItemText(IDC_COMBO_SET_FNAME2, g_pOption->FileName_ConsApp.c_str());
+	((CButton*)GetDlgItem(IDC_CHECK_IS_UI_APP))->SetCheck(g_pOption->UseUIApp);
+
+	SetDlgItemText(IDC_EDIT_SET_EXEC_PARAM, g_pOption->StartExtern.c_str());
+	SetDlgItemText(IDC_EDIT_SET_PUBADDR_LABEL, g_pOption->PubAddrLabel.c_str());
 	((CButton*)GetDlgItem(IDC_CHECK_DONATE))->SetCheck(g_pOption->DonateAuthor);
 
     return TRUE;

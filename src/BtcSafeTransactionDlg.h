@@ -37,13 +37,6 @@ protected:
 	void InsertLog(const std::string& str);
 	void UpdateDisableControl();
 public:
-	struct MakePubKeyInfo
-	{
-		std::string PubKey1, PubKey2, PubKey3;
-	};
-	MakePubKeyInfo GetMakePubKeyInfo();
-
-public:
 	afx_msg void OnClose();
 	afx_msg void OnEnChangeEditSendAmount();
 	afx_msg void OnBnClickedButtonGetP2psignAddr();

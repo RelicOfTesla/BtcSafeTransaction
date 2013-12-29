@@ -18,12 +18,15 @@ struct CRpcOption
 	BOOL UseUIApp;
 	std::string FileName_UIApp, FileName_ConsApp;
 
-	BOOL DonateAuthor;
 };
 
 struct CAppOption : CRpcOption 
 {
+	BOOL DonateAuthor;
+
 	std::string PubAddrLabel;
+
+	double txfee;
 
 	BOOL MakeRecvMode;
 };

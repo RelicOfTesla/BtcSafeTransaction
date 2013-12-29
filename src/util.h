@@ -8,6 +8,7 @@ std::string MakeRandomString(USHORT len);
 
 std::string JsonOptGet_Str(Json::Value& jv, const char* name, const std::string& def);
 UINT JsonOptGet_UINT(Json::Value& jv, const char* name, const UINT& def);
+double JsonOptGet_double(Json::Value& jv, const char* name, const double& def);
 
 std::string GetWindowStlText(class CWnd*);
 
