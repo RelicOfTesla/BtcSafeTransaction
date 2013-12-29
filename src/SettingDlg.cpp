@@ -1,6 +1,3 @@
-// src/SettingDlg.cpp : 实现文件
-//
-
 #include "stdafx.h"
 #include "BtcSafeTransaction.h"
 #include "SettingDlg.h"
@@ -8,6 +5,7 @@
 #include "util.h"
 #include <sdk/util/AppPath.hpp>
 #include <boost/algorithm/string.hpp>
+#include "lang_str.h"
 //////////////////////////////////////////////////////////////////////////
 UINT SettingDlg_DoModal()
 {
@@ -15,7 +13,6 @@ UINT SettingDlg_DoModal()
     return dlg.DoModal();
 }
 //////////////////////////////////////////////////////////////////////////
-// CSettingDlg 对话框
 
 IMPLEMENT_DYNAMIC(CSettingDlg, CDialog)
 
@@ -144,7 +141,7 @@ std::string DirectorySelectDlg(HWND hParent, const TCHAR* title,  const TCHAR* o
 void CSettingDlg::OnBnClickedButtonSetSel1()
 {
     std::string dir = GetFullFilePath(GetWindowStlText(GetDlgItem(IDC_EDIT_SET_BIN_DIR)));
-    dir = DirectorySelectDlg(*this, "请选择qt所在目录", dir.c_str());
+    dir = DirectorySelectDlg(*this, STR_SELECT_QT_DIR, dir.c_str());
     if( dir.size() )
     {
         SetDlgItemText(IDC_EDIT_SET_BIN_DIR, dir.c_str());
@@ -156,7 +153,7 @@ void CSettingDlg::OnBnClickedButtonSetSel1()
 void CSettingDlg::OnBnClickedButtonSetSel2()
 {
     std::string dir = GetFullFilePath(GetWindowStlText(GetDlgItem(IDC_EDIT_SET_DB_DIR)));
-    dir = DirectorySelectDlg(*this, "请选择blockchain数据库所在目录", dir.c_str());
+    dir = DirectorySelectDlg(*this, STR_SELECT_BB_DIR, dir.c_str());
     if( dir.size() )
     {
         SetDlgItemText(IDC_EDIT_SET_DB_DIR, dir.c_str());

@@ -116,6 +116,7 @@
     <ClInclude Include="src\BtcSafeTransaction.h" />
     <ClInclude Include="src\BtcSafeTransactionDlg.h" />
     <ClInclude Include="src\InputDlg.h" />
+    <ClInclude Include="src\lang_str.h" />
     <ClInclude Include="src\option.h" />
     <ClInclude Include="src\json_rpc.hpp" />
     <ClInclude Include="src\rpc_helper.hpp" />

@@ -1,12 +1,9 @@
-// src/BookListDlg.cpp : 实现文件
-//
-
 #include "stdafx.h"
 #include "BtcSafeTransaction.h"
 #include "BookListDlg.h"
 #include "rpc_helper.hpp"
 #include "util.h"
-// CBookListDlg 对话框
+
 //////////////////////////////////////////////////////////////////////////
 extern shared_ptr<CRpcHelper> g_pRpcHelper;
 

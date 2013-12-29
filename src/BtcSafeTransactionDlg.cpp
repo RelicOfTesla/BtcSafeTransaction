@@ -1,7 +1,3 @@
-
-// BtcSafeTransactionDlg.cpp : 实现文件
-//
-
 #include "stdafx.h"
 #include "BtcSafeTransaction.h"
 #include "BtcSafeTransactionDlg.h"
@@ -17,6 +13,7 @@
 #include "rpc_process.h"
 #include "option.h"
 #include "util.h"
+#include "lang_str.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -176,7 +173,7 @@ BOOL CBtcSafeTransactionDlg::OnInitDialog()
 #if !_DEBUG
     if (!GetCertCheck(GetAppPath()))
     {
-        AfxMessageBox("程序被篡改，禁止使用!");
+        AfxMessageBox(STR_APP_FALSIFIED);
         PostMessage(WM_CLOSE, 0, 0);
     }
 #endif
@@ -199,8 +196,8 @@ BOOL CBtcSafeTransactionDlg::OnInitDialog()
     }
     UpdateDisableControl();
 
-    InsertLog("程序源码:https://github.com/laybor/BtcSafeTransaction");
-    InsertLog("作者网站:http://xingfeng.org");
+    InsertLog(STR_APP_SRC_URL);
+    InsertLog(STR_AUTHOR_HOME);
 
     SetTimer(TimerID_CheckProcess, TimeInterval_CheckProcess, 0);
     SetTimer(TimerID_RefreshPubKey, TimeInterval_RefreshPubKey, 0);
@@ -254,7 +251,7 @@ void CBtcSafeTransactionDlg::OnCancel()
 
 struct MakePubKeyInfo
 {
-	CRpcHelper::pubkey_str PubKey1, PubKey2, PubKey3;
+    CRpcHelper::pubkey_str PubKey1, PubKey2, PubKey3;
 };
 
 MakePubKeyInfo GetMakePubKeyInfo(CWnd* pDlg)
@@ -271,15 +268,15 @@ MakePubKeyInfo GetMakePubKeyInfo(CWnd* pDlg)
 
     if (info.PubKey1.empty())
     {
-        throw std::logic_error("公钥1错误");
+        throw std::logic_error(STR_PUBKEY1_ERROR);
     }
     if (info.PubKey2.empty())
     {
-        throw std::logic_error("公钥2错误");
+        throw std::logic_error(STR_PUBKEY2_ERROR);
     }
     if (info.PubKey1 == info.PubKey2 || info.PubKey1 == info.PubKey3 || info.PubKey2 == info.PubKey3)
     {
-        throw std::logic_error("存在相同的公钥");
+        throw std::logic_error(STR_SAME_PUBKEYS);
     }
     if ( g_pOption->MakeRecvMode )
     {
@@ -301,22 +298,22 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonGetP2psignAddr()
         SetDlgItemText(IDC_EDIT_P2PSIG_ADDR, MulSigAddr.c_str());
 
         std::string label = g_pRpcHelper->GetLabel(MulSigAddr);
-		if(label.empty())
-		{
-			if (g_pOption->MakeRecvMode)
-			{
-				label = "销售单";
-			}
-			else
-			{
-				label = "购物单";
-			}
-			g_pRpcHelper->SetMulSigAddrLabel(makeinfo.PubKey1, makeinfo.PubKey2, makeinfo.PubKey3, CRpcHelper::label_str(label));
-		}
+        if(label.empty())
+        {
+            if (g_pOption->MakeRecvMode)
+            {
+                label = STR_DEF_COMMENT_WILL_SELL;
+            }
+            else
+            {
+                label = STR_DEF_COMMENT_WILL_BUY;
+            }
+            g_pRpcHelper->SetMulSigAddrLabel(makeinfo.PubKey1, makeinfo.PubKey2, makeinfo.PubKey3, CRpcHelper::label_str(label));
+        }
         SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_COMMENT, label.c_str());
 
-		SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, "");
-		PostMessage(WM_TIMER, TimerID_RefreshMulSigAddrBalance, 0);
+        SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, "");
+        PostMessage(WM_TIMER, TimerID_RefreshMulSigAddrBalance, 0);
         SetTimer(TimerID_RefreshMulSigAddrBalance, TimeInterval_RefreshBalance, 0);
 
     }
@@ -334,16 +331,16 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonSendMoneyToP2psigAddr()
         CRpcHelper::address_str p2psig_addr = CRpcHelper::address_str( GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR)) );
         if (p2psig_addr.empty())
         {
-            throw std::runtime_error("担保地址为空");
+            throw std::runtime_error(STR_MULSIG_ADDR_EMPTY);
         }
         std::string szAmount = GetWindowStlText(GetDlgItem(IDC_EDIT_SEND_AMOUNT));
         double fAmount = atof(szAmount.c_str());
         if (fAmount <= MIN_SEND_AMOUNT)
         {
-            throw std::runtime_error("发送金额过小");
+            throw std::runtime_error(STR_SEND_MONEY_SMALL);
         }
 
-        std::string sztip = str_format("确实要从你钱包转[%s]给[%s]么？",
+        std::string sztip = str_format(STR_ASK_SEND_MONEY_TO_ADDR,
                                        amount2str(fAmount).c_str(), p2psig_addr.c_str()
                                       );
         if (AfxMessageBox(sztip.c_str(), MB_YESNO) == IDNO)
@@ -376,8 +373,8 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonSendMoneyToP2psigAddr()
             }
         }
         SetDlgItemText(IDC_EDIT_SEND_AMOUNT, "");
-        InsertLog("发送金额至担保地址成功，请发送你的公钥(和交易ID)给商家.");
-		InsertLog("交易ID:" + txid);
+        InsertLog(STR_LOG_SENDED_MONEY_TO_MUL_ADDR);
+        InsertLog(STR_TIP_PREFIX_TXID + txid);
 
     }
     catch(std::exception& e)
@@ -397,7 +394,7 @@ shared_ptr<std::string> CBtcSafeTransactionDlg::GetInputPassword()
 {
     shared_ptr<std::string> pStr(new std::string, fill_and_delete_pstring);
     pStr->reserve(256);
-    InputDlg_DoModal(pStr, "请输入密码", true);
+    InputDlg_DoModal(pStr, STR_TIP_INPUT_PASS, true);
     return pStr;
 }
 
@@ -408,7 +405,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonEditP2psigAddrLabel()
         std::string p2psig_addr = GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR));
         if (p2psig_addr.empty())
         {
-            throw std::runtime_error("担保地址为空");
+            throw std::runtime_error(STR_MULSIG_ADDR_EMPTY);
         }
 
         std::string comment = GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_COMMENT));
@@ -436,7 +433,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonEditP2psigAddrLabelTempl()
         std::string p2psig_addr = GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR));
         if (p2psig_addr.empty())
         {
-            throw std::runtime_error("担保地址为空");
+            throw std::runtime_error(STR_MULSIG_ADDR_EMPTY);
         }
 
 
@@ -449,7 +446,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonEditP2psigAddrLabelTempl()
         std::string comment = UiPubKey2 + "/" + UiPubKey3;
         if (g_pOption->PubAddrLabel != DefaultPubCoinLabel)
         {
-            if (AfxMessageBox("是否加自己的公钥也加入备注中", MB_YESNO) == IDYES)
+            if (AfxMessageBox(STR_ASK_INSERT_MY_PUBKEY_TO_COMMENT, MB_YESNO) == IDYES)
             {
                 std::string UiPubKey1 = GetWindowStlText(GetDlgItem(IDC_EDIT_PUBKEY_1));
                 boost::algorithm::trim(UiPubKey1);
@@ -492,7 +489,7 @@ size_t search_vout(const CRpcHelper::TxDataInfo& txinfo, const std::string& addr
             return i;
         }
     }
-    throw std::runtime_error("无法读取vout，找不到相关数据，请确认你的数据是最新的/请确认担保地址、买家/商家模式是对的");
+    throw std::runtime_error(STR_CAN_NOT_FIND_TX_VOUT);
 }
 
 void RemoveSpentTransaction(CRpcHelper::unspent_info&)
@@ -520,10 +517,10 @@ CRpcHelper::unspent_info GetUnspentData_FromMulSigAddr(const CRpcHelper::address
     if (unspent.txlist.empty())
     {
         shared_ptr<std::string> pTxID(new std::string);
-        InputDlg_DoModal(pTxID, "未找到最新交易数据，请手工输入[交易ID,交易ID]", false);
+        InputDlg_DoModal(pTxID, STR_UNSPENT_TX_INPUT_TITLE, false);
         if (pTxID->empty())
         {
-            throw std::logic_error("未找到交易数据，请更新blockchain");
+            throw std::logic_error(STR_TX_INPUT_EMPTY);
         }
         std::list<std::string> strlist;
         // #DEFINE _SCL_SECURE_NO_WARNINGS
@@ -543,6 +540,10 @@ CRpcHelper::unspent_info GetUnspentData_FromMulSigAddr(const CRpcHelper::address
             unspent.txlist.push_back(from);
         }
         RemoveSpentTransaction(unspent);
+		if (unspent.txlist.empty())
+		{
+			throw std::logic_error(STR_UNSPENT_TX_EMPTY);
+		}
     }
 #endif
     return unspent;
@@ -557,22 +558,22 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         CRpcHelper::address_str p2psig_addr = CRpcHelper::address_str( GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR)) );
         if (p2psig_addr.empty())
         {
-            throw std::logic_error("担保地址为空");
+            throw std::logic_error(STR_MULSIG_ADDR_EMPTY);
         }
         CRpcHelper::address_str szRecvAddr = CRpcHelper::address_str( GetWindowStlText(GetDlgItem(IDC_EDIT_RECV_ADDR)) );
         boost::algorithm::trim(szRecvAddr);
         if (szRecvAddr.empty())
         {
-            throw std::logic_error("收款地址错误");
+            throw std::logic_error(STR_REQUEST_RECV_ADDR_EMPTY);
         }
 
         CRpcHelper::unspent_info unspent = GetUnspentData_FromMulSigAddr(p2psig_addr);
         if (unspent.txlist.empty())
         {
-            throw std::runtime_error("找不到相关数据，请更新数据库");
+            throw std::runtime_error(STR_UNSPENT_TX_EMPTY);
         }
 
-		double fAmount = atof( GetWindowStlText(GetDlgItem(IDC_EDIT_SEND_AMOUNT)).c_str() );
+        double fAmount = atof( GetWindowStlText(GetDlgItem(IDC_EDIT_SEND_AMOUNT)).c_str() );
         double txfee = g_pOption->txfee;
         if (fAmount + txfee > unspent.total)
         {
@@ -580,15 +581,15 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         }
         if ( fAmount <= MIN_SEND_AMOUNT )
         {
-            throw std::logic_error("收款金额过小.");
+            throw std::logic_error(STR_RECV_REQUEST_AMOUNT_SMALL);
         }
-		if (atof(GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_BALANCE)).c_str()) <= ZERO_AMOUNT)
-		{
-			SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, amount2str(unspent.total).c_str());
-		}
+        if (atof(GetWindowStlText(GetDlgItem(IDC_EDIT_P2PSIG_ADDR_BALANCE)).c_str()) <= ZERO_AMOUNT)
+        {
+            SetDlgItemText(IDC_EDIT_P2PSIG_ADDR_BALANCE, amount2str(unspent.total).c_str());
+        }
         if ( fabs(unspent.total - fAmount - txfee ) > ZERO_AMOUNT )
         {
-            std::string sztip = str_format("你要收款的金额(%s)与担保地址历史余额(%s)不相同，确定继续收款么？",
+            std::string sztip = str_format(STR_TIP_RECV_AMOUNT_NOT_EQUAL_BALANCE,
                                            amount2str(fAmount).c_str(),
                                            amount2str(unspent.total).c_str()
                                           );
@@ -612,20 +613,22 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
 
             assert( paylist.begin()->fAmount + (++paylist.begin())->fAmount + txfee == unspent.total );
         }
-		else
-		{
-			assert( paylist.begin()->fAmount + txfee == unspent.total );
-		}
-
-        if (g_pOption->DonateAuthor) // 捐赠0.05%(万分之5)给作者[可选开关,默认不捐赠]
+        else
         {
+            assert( paylist.begin()->fAmount + txfee == unspent.total );
+        }
+
+        if (g_pOption->DonateAuthor) // default FALSE.
+        {
+			// 捐赠0.05%(万分之5)给作者[可选开关,默认不捐赠]
+			
             if (g_CoinAddr_FirstChar == '1')
             {
                 pay.addr.assign("161WBgKjso7Yht57NgVgnSEkvVui3mcpe4");
             }
             else if (g_CoinAddr_FirstChar == 'L')
             {
-				pay.addr.assign("LfnLtw1My7odaaNnPaE3Sur9p1dWGUTsEd");
+                pay.addr.assign("LfnLtw1My7odaaNnPaE3Sur9p1dWGUTsEd");
             }
             else
             {
@@ -674,7 +677,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         }
 
         SetDlgItemText(IDC_EDIT_TX_DATA, txdata.c_str());
-        InsertLog("交易(请求)数据已生成，请发送数据给对方，等待其确认转币.");
+        InsertLog(STR_TX_REQUEST_BUILDED);
     }
     catch(std::exception& e)
     {
@@ -688,12 +691,12 @@ bool VerifyTxData(const CRpcHelper::txdata_str& txdata)
 {
     if (txdata.empty())
     {
-        throw std::logic_error("交易数据为空");
+        throw std::logic_error(STR_ERROR_TX_DATA_EMPTY);
     }
     CRpcHelper::TxDataInfo txinfo = g_pRpcHelper->GetTransactionInfo_FromData(txdata);
     if (txinfo.src_txid_list.empty())
     {
-        throw std::runtime_error("交易来源异常");
+        throw std::runtime_error(STR_ERROR_TX_DATA_WITH_SRCTX_EMPTY);
     }
     double to_amount = 0;
     for (auto it = txinfo.dest_list.begin(); it != txinfo.dest_list.end(); ++it)
@@ -715,9 +718,9 @@ bool VerifyTxData(const CRpcHelper::txdata_str& txdata)
             from_balance += info.value;
         }
     }
-    if ( fabs(from_balance - to_amount - g_pOption->fe) > ZERO_AMOUNT )
+    if ( fabs(from_balance - to_amount - g_pOption->txfee) > ZERO_AMOUNT )
     {
-        std::string sztip = str_format("警告：余额(%s)有可能不等于欲转账金额(%s)",
+        std::string sztip = str_format(STR_TIP_BALANCE_NOT_EQUAL_FINAL_AMOUNT,
                                        amount2str(from_balance).c_str(),
                                        amount2str(to_amount).c_str()
                                       );
@@ -738,17 +741,13 @@ bool VerifyTxData(const CRpcHelper::txdata_str& txdata)
     }
     if (except_str.size())
     {
-        std::string sztip = str_format(
-                                "警告，发现异常！\n"
-                                "正常应该是从担保地址转账出去的，现在发现疑似要从非担保地址地址%s 转账出去，确认还要继续？",
-                                except_str.c_str()
-                            );
+        std::string sztip = str_format(STR_TIP_FIND_EXCEPTION_SEND_FROM, except_str.c_str());
         if (AfxMessageBox(sztip.c_str(), MB_ICONHAND | MB_YESNO | MB_DEFBUTTON2) == IDNO)
         {
             return false;
         }
     }
-    std::string sztip = str_format("你确认要从%s，转币%s给对方么？转完后就退不了款的哦!", from_addr_str.c_str(), amount2str(to_amount).c_str());
+    std::string sztip = str_format(STR_ASK_SEND_FROM_MUL_ADDR_OF_AMOUNT, from_addr_str.c_str(), amount2str(to_amount).c_str());
     if (AfxMessageBox(sztip.c_str(), MB_YESNO | MB_DEFBUTTON2) == IDNO)
     {
         return false;
@@ -790,7 +789,7 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonSigEndAndSend()
             }
         }
         g_pRpcHelper->SendRawTransaction(txdata);
-        InsertLog("已确认发款完毕,建议上blockchain.info查一下是否有0确认的交易");
+        InsertLog(STR_LOG_SENDED_MONEY_FROM_MUL_ADDR);
     }
     catch(std::exception& e)
     {
@@ -939,7 +938,7 @@ double WebQuery_GetMulSignBalance(const std::string& addr)
     }
     else
     {
-        throw std::runtime_error("无法查询你的币种余额");
+        throw std::runtime_error(STR_TIP_CAN_NOT_WEB_QUERY_BALANCE);
     }
 }
 
@@ -962,7 +961,7 @@ void CBtcSafeTransactionDlg::OnTimer(UINT_PTR nIDEvent)
             {
                 if ( Async_IsRpcCanConnected() )
                 {
-                    SetDlgItemText(IDC_STATIC_PORT_STATE, "状态：已连接");
+                    SetDlgItemText(IDC_STATIC_PORT_STATE, STR_STATE_CONNECTED);
 
                     if (GetDlgItem(IDC_EDIT_PUBKEY_1)->GetWindowTextLength() == 0)
                     {
@@ -986,27 +985,25 @@ void CBtcSafeTransactionDlg::OnTimer(UINT_PTR nIDEvent)
                     CButton* pIsAutoStart = (CButton*)GetDlgItem(IDC_CHECK_IS_AUTO_START);
                     if ( pIsAutoStart->GetCheck() )
                     {
-                        SetDlgItemText(IDC_STATIC_PORT_STATE, "状态：启动中");
+                        SetDlgItemText(IDC_STATIC_PORT_STATE, STR_STATE_STARTING);
                         StartProcess_FromOption(g_pOption);
                         SetDlgItemText(IDC_EDIT_PUBKEY_1, "");
                     }
                     else
                     {
-                        SetDlgItemText(IDC_STATIC_PORT_STATE, "状态：等待连接");
+                        SetDlgItemText(IDC_STATIC_PORT_STATE, STR_STATE_WAIT);
                     }
                 }
             }
             catch(std::exception& e)
             {
-                std::string str = "错误,";
-                str += e.what();
-                PushError(str.c_str());
+                PushError(e.what());
             }
 
             std::string ec = g_errorlist.PopString();
             if (ec.size())
             {
-                InsertLog("错误:" + ec);
+                InsertLog(STR_PREFIX_ERROR + ec);
             }
             return;
         }
