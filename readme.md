@@ -2,9 +2,9 @@ Bitcoin safe transaction tools
 
 The tools used multiple signature transaction.
 
-You can send money to locked bitcoin address. When the dealer was not send out goods, you can send back your bitcoin. 
+You can send money to the locked bitcoin address. The dealer was not geted it.  When the dealer was not send out goods,  you can request send back your bitcoin. 
 
-Author home: http://xingfeng.org/
+Author home: http://xingfeng.org/?p=162
 
 
 ===============================
@@ -20,6 +20,6 @@ Author home: http://xingfeng.org/
 
        如果出现较大的争执，则可以让第三裁判人审计裁定，可以实现买方+裁判的强制退款，或商家+裁判的强制收款。
 
-作者网站: http://xingfeng.org/
+作者网站: http://xingfeng.org/?p=162
 
 
