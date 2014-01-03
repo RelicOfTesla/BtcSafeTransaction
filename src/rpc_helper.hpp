@@ -44,9 +44,9 @@ enum RPCErrorCode
 template<int>
 struct string_i : std::string
 {
-	string_i(){}
-	explicit string_i(const std::string& s ) : std::string(s)
-	{}
+    string_i() {}
+    explicit string_i( const std::string& s ) : std::string( s )
+    {}
 };
 
 class CRpcHelper
@@ -68,32 +68,32 @@ public:
         double balance;
         label_str label;
 
-        addr_ext_info() : balance(0)
+        addr_ext_info() : balance( 0 )
         {}
     };
     typedef std::map<address_str, addr_ext_info> full_booklist;
 
-	struct unk_txfrom_info
-	{
-		txid_str txid;
-		size_t vout;
+    struct unk_txfrom_info
+    {
+        txid_str txid;
+        size_t vout;
 
-		unk_txfrom_info() : vout(0)
-		{}
-	};
-	typedef std::list<unk_txfrom_info> unk_txfrom_list;
+        unk_txfrom_info() : vout( 0 )
+        {}
+    };
+    typedef std::list<unk_txfrom_info> unk_txfrom_list;
 
 
-	struct unspent_info
-	{
-		typedef unk_txfrom_list unspent_txlist;
-		//////////////////////////////////////////////////////////////////////////
-		double total;
-		unspent_txlist txlist;
+    struct unspent_info
+    {
+        typedef unk_txfrom_list unspent_txlist;
+        //////////////////////////////////////////////////////////////////////////
+        double total;
+        unspent_txlist txlist;
 
-		unspent_info() : total(0)
-		{}
-	};
+        unspent_info() : total( 0 )
+        {}
+    };
 
 
     struct payout_record
@@ -101,7 +101,7 @@ public:
         double fAmount;
         address_str addr;
 
-        payout_record() : fAmount(0)
+        payout_record() : fAmount( 0 )
         {}
     };
 
@@ -110,19 +110,19 @@ public:
     struct TxDataInfo
     {
 
-		struct TxDestInfo
-		{
-			double value;
-			str_unique_list addr;
-		};
+        struct TxDestInfo
+        {
+            double value;
+            str_unique_list addr;
+        };
 
-		typedef std::vector<TxDestInfo> TxDestList;
+        typedef std::vector<TxDestInfo> TxDestList;
 
-		unk_txfrom_list src_txid_list;
-		TxDestList dest_list;
+        unk_txfrom_list src_txid_list;
+        TxDestList dest_list;
     };
 public:
-    CRpcHelper(shared_ptr<CCoinJsonRpc> pRPC)
+    CRpcHelper( shared_ptr<CCoinJsonRpc> pRPC )
     {
         m_rpc = pRPC;
         m_cache_tick_getbalance = 0;
@@ -130,51 +130,51 @@ public:
 
     bool IsRpcCanConnected();
 
-    pubkey_str GetPubKey(const address_str& recvaddr);
-    address_str NewMulSigAddr(const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3);
+    pubkey_str GetPubKey( const address_str& recvaddr );
+    address_str NewMulSigAddr( const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3 );
 
-    void SetMulSigAddrLabel(const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3,
-                            const label_str& label);
+    void SetMulSigAddrLabel( const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3,
+                             const label_str& label );
 
     full_booklist GetFullBookList();
     mini_booklist GetMiniBookList();
 
-    double GetBalance_FromRecvAddr(const address_str& addr);
-    label_str GetLabel(const address_str& addr);
-    address_str GetOrNewAccountAddress(const label_str& label);
+    double GetBalance_FromRecvAddr( const address_str& addr );
+    label_str GetLabel( const address_str& addr );
+    address_str GetOrNewAccountAddress( const label_str& label );
 
-    void EnterPassword(const std::string& pass);
+    void EnterPassword( const std::string& pass );
 
-    txid_str SendAmount(const address_str& addr, double amount);
+    txid_str SendAmount( const address_str& addr, double amount );
 
-    unspent_info GetUnspentData_FromRecvAddr(const address_str& addr);
+    unspent_info GetUnspentData_FromRecvAddr( const address_str& addr );
 
-    txdata_str CreateRawTransaction(const unspent_info::unspent_txlist& txlist, const payout_list& paylist);
+    txdata_str CreateRawTransaction( const unspent_info::unspent_txlist& txlist, const payout_list& paylist );
 
-    txdata_str SignRawTransaction(const txdata_str& txdata);
+    txdata_str SignRawTransaction( const txdata_str& txdata );
 
-    void SendRawTransaction(const txdata_str& txdata);
+    void SendRawTransaction( const txdata_str& txdata );
 
-    TxDataInfo GetTransactionInfo_FromData(const txdata_str& txdata);
-	txdata_str GetRawTransaction_FromTxId(const txid_str& txid);
+    TxDataInfo GetTransactionInfo_FromData( const txdata_str& txdata );
+    txdata_str GetRawTransaction_FromTxId( const txid_str& txid );
 
-	void SetTxFee(double fee);
+    void SetTxFee( double fee );
 public:
-	TxDataInfo GetTransactionInfo_FromTxId(const txid_str& txid)
-	{
-		return GetTransactionInfo_FromData( GetRawTransaction_FromTxId(txid) );
-	}
+    TxDataInfo GetTransactionInfo_FromTxId( const txid_str& txid )
+    {
+        return GetTransactionInfo_FromData( GetRawTransaction_FromTxId( txid ) );
+    }
 protected:
-	double GetRecvHistoryVolume_FromTxFrom(const unk_txfrom_info& from);
+    double GetRecvHistoryVolume_FromTxFrom( const unk_txfrom_info& from );
 
-    address_str NewAddress(const label_str& label);
+    address_str NewAddress( const label_str& label );
     str_unique_list GetLabelList();
     str_unique_list GetAddressList();
-    str_unique_list GetAddrList_FromLabel(const label_str& label);
+    str_unique_list GetAddrList_FromLabel( const label_str& label );
 
-    void DupLabel(const address_str& addr, const label_str& label);
+    void DupLabel( const address_str& addr, const label_str& label );
 
-	Json::Value DecodeRawTransactionJson(const txdata_str& txdata);
+    Json::Value DecodeRawTransactionJson( const txdata_str& txdata );
 private:
     UINT m_cache_tick_getbalance;
     full_booklist m_cache_list_getbalance;
