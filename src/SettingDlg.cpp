@@ -57,6 +57,9 @@ void CSettingDlg::OnBnClickedOk()
 
     g_pOption->PubAddrLabel = GetWindowStlText( GetDlgItem( IDC_EDIT_SET_PUBADDR_LABEL ) );
     g_pOption->DonateAuthor = ( ( CButton* )( GetDlgItem( IDC_CHECK_DONATE ) ) )->GetCheck();
+
+	g_pOption->txfee = atof(GetWindowStlText(GetDlgItem(IDC_EDIT_TX_FEE)).c_str());
+
     boost::algorithm::trim( g_pOption->IP );
     boost::algorithm::trim( g_pOption->LoginUser );
     boost::algorithm::trim( g_pOption->LoginPass );
@@ -91,6 +94,8 @@ BOOL CSettingDlg::OnInitDialog()
     SetDlgItemText( IDC_EDIT_SET_EXEC_PARAM, g_pOption->StartExtern.c_str() );
     SetDlgItemText( IDC_EDIT_SET_PUBADDR_LABEL, g_pOption->PubAddrLabel.c_str() );
     ( ( CButton* )GetDlgItem( IDC_CHECK_DONATE ) )->SetCheck( g_pOption->DonateAuthor );
+
+	SetDlgItemText( IDC_EDIT_TX_FEE, amount2str(g_pOption->txfee).c_str() );
 
     return TRUE;
 }

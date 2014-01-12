@@ -209,6 +209,27 @@ void CRpcHelper::SetTxFee( double fee )
     std::string ret = m_rpc->Send( "settxfee", args );
 }
 
+std::pair<CRpcHelper::address_str, double> CRpcHelper::gettxout( const txid_str& txid, int n )
+{
+    std::pair<CRpcHelper::address_str, double> result;
+    Json::Value args;
+    args.append( txid );
+    args.append( n );
+    Json::Value jsv = json_from_string( m_rpc->Send( "gettxout", args ) );
+    if( jsv.size() )
+    {
+        result.second = jsv["value"].asDouble();
+        jsv = jsv["scriptPubKey"]["addresses"];
+        if( jsv.size() )
+        {
+            result.first = address_str( jsv[UINT(0)].asString() );
+			return result;
+        }
+    }
+	throw std::runtime_error( "not coin in local database or was spend.");
+}
+
+
 double CRpcHelper::GetRecvHistoryVolume_FromTxFrom( const unk_txfrom_info& from )
 {
     CRpcHelper::TxDataInfo query_tx = GetTransactionInfo_FromTxId( from.txid );
@@ -330,6 +351,7 @@ CRpcHelper::txdata_str CRpcHelper::SignRawTransaction( const txdata_str& txdata 
     Json::Value args;
     args.append( txdata );
     Json::Value jv = json_from_string( m_rpc->Send( "signrawtransaction", args ) );
+	// assert( jv["complete"].asBool() ); // don't check it.
     return txdata_str( jv["hex"].asString() );
 }
 

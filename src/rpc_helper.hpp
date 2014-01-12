@@ -159,6 +159,8 @@ public:
     txdata_str GetRawTransaction_FromTxId( const txid_str& txid );
 
     void SetTxFee( double fee );
+
+	std::pair<address_str, double> gettxout(const txid_str&, int n);
 public:
     TxDataInfo GetTransactionInfo_FromTxId( const txid_str& txid )
     {

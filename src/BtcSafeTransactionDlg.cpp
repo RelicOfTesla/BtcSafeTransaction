@@ -21,7 +21,6 @@
 
 #define WALLET_SAVE_NOTFULL_MULSIG_TX	0
 #define RPC_CAN_QUERY_MULSIG_BALANCE	WALLET_SAVE_NOTFULL_MULSIG_TX
-#define RPC_CAN_TRACE_MULSIG_SPENT		0
 
 #define RPC_CAN_MODIFY_LABEL	0
 
@@ -492,16 +491,6 @@ size_t search_vout( const CRpcHelper::TxDataInfo& txinfo, const std::string& add
     throw std::runtime_error( STR_CAN_NOT_FIND_TX_VOUT );
 }
 
-void RemoveSpentTransaction( CRpcHelper::unspent_info& )
-{
-#if RPC_CAN_TRACE_MULSIG_SPENT
-#else
-    printf( "warning: can't get mulsig spent transaction" );
-    // not support, must make saved database.
-    // but, when i'm send out, bitcoin was checked tx spented.
-#endif
-}
-
 CRpcHelper::unspent_info GetUnspentData_FromMulSigAddr( const CRpcHelper::address_str& addr )
 {
     CRpcHelper::unspent_info unspent = g_pRpcHelper->GetUnspentData_FromRecvAddr( addr );
@@ -535,11 +524,20 @@ CRpcHelper::unspent_info GetUnspentData_FromMulSigAddr( const CRpcHelper::addres
             }
             CRpcHelper::TxDataInfo query_tx = g_pRpcHelper->GetTransactionInfo_FromTxId( from.txid );
             from.vout = search_vout( query_tx, addr );
-            // verify(from.vout>=0);
+			// verify(from.vout>=0);
+			try
+			{
+				// check txid has spent.
+				g_pRpcHelper->gettxout(from.txid, from.vout);
+			}
+			catch(std::exception& )
+			{
+				// it's spent.
+				continue;
+			}
             unspent.total += query_tx.dest_list[from.vout].value;
             unspent.txlist.push_back( from );
         }
-        RemoveSpentTransaction( unspent );
         if( unspent.txlist.empty() )
         {
             throw std::logic_error( STR_UNSPENT_TX_EMPTY );
@@ -572,6 +570,10 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         {
             throw std::runtime_error( STR_UNSPENT_TX_EMPTY );
         }
+		if( atof( GetWindowStlText( GetDlgItem( IDC_EDIT_P2PSIG_ADDR_BALANCE ) ).c_str() ) <= ZERO_AMOUNT )
+		{
+			SetDlgItemText( IDC_EDIT_P2PSIG_ADDR_BALANCE, amount2str( unspent.total ).c_str() );
+		}
 
         double fAmount = atof( GetWindowStlText( GetDlgItem( IDC_EDIT_SEND_AMOUNT ) ).c_str() );
         double txfee = g_pOption->txfee;
@@ -582,10 +584,6 @@ void CBtcSafeTransactionDlg::OnBnClickedButtonRecvFromP2psigAddr()
         if( fAmount <= MIN_SEND_AMOUNT )
         {
             throw std::logic_error( STR_RECV_REQUEST_AMOUNT_SMALL );
-        }
-        if( atof( GetWindowStlText( GetDlgItem( IDC_EDIT_P2PSIG_ADDR_BALANCE ) ).c_str() ) <= ZERO_AMOUNT )
-        {
-            SetDlgItemText( IDC_EDIT_P2PSIG_ADDR_BALANCE, amount2str( unspent.total ).c_str() );
         }
         if( fabs( unspent.total - fAmount - txfee ) > ZERO_AMOUNT )
         {
