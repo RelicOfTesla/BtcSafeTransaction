@@ -8,178 +8,178 @@
 
 enum RPCErrorCode
 {
-    // Standard JSON-RPC 2.0 errors
-    RPC_INVALID_REQUEST  = -32600,
-    RPC_METHOD_NOT_FOUND = -32601,
-    RPC_INVALID_PARAMS   = -32602,
-    RPC_INTERNAL_ERROR   = -32603,
-    RPC_PARSE_ERROR      = -32700,
+	// Standard JSON-RPC 2.0 errors
+	RPC_INVALID_REQUEST  = -32600,
+	RPC_METHOD_NOT_FOUND = -32601,
+	RPC_INVALID_PARAMS   = -32602,
+	RPC_INTERNAL_ERROR   = -32603,
+	RPC_PARSE_ERROR      = -32700,
 
-    // General application defined errors
-    RPC_MISC_ERROR                  = -1,  // std::exception thrown in command handling
-    RPC_FORBIDDEN_BY_SAFE_MODE      = -2,  // Server is in safe mode, and command is not allowed in safe mode
-    RPC_TYPE_ERROR                  = -3,  // Unexpected type was passed as parameter
-    RPC_INVALID_ADDRESS_OR_KEY      = -5,  // Invalid address or key
-    RPC_OUT_OF_MEMORY               = -7,  // Ran out of memory during operation
-    RPC_INVALID_PARAMETER           = -8,  // Invalid, missing or duplicate parameter
-    RPC_DATABASE_ERROR              = -20, // Database error
-    RPC_DESERIALIZATION_ERROR       = -22, // Error parsing or validating structure in raw format
+	// General application defined errors
+	RPC_MISC_ERROR                  = -1,  // std::exception thrown in command handling
+	RPC_FORBIDDEN_BY_SAFE_MODE      = -2,  // Server is in safe mode, and command is not allowed in safe mode
+	RPC_TYPE_ERROR                  = -3,  // Unexpected type was passed as parameter
+	RPC_INVALID_ADDRESS_OR_KEY      = -5,  // Invalid address or key
+	RPC_OUT_OF_MEMORY               = -7,  // Ran out of memory during operation
+	RPC_INVALID_PARAMETER           = -8,  // Invalid, missing or duplicate parameter
+	RPC_DATABASE_ERROR              = -20, // Database error
+	RPC_DESERIALIZATION_ERROR       = -22, // Error parsing or validating structure in raw format
 
-    // P2P client errors
-    RPC_CLIENT_NOT_CONNECTED        = -9,  // Bitcoin is not connected
-    RPC_CLIENT_IN_INITIAL_DOWNLOAD  = -10, // Still downloading initial blocks
+	// P2P client errors
+	RPC_CLIENT_NOT_CONNECTED        = -9,  // Bitcoin is not connected
+	RPC_CLIENT_IN_INITIAL_DOWNLOAD  = -10, // Still downloading initial blocks
 
-    // Wallet errors
-    RPC_WALLET_ERROR                = -4,  // Unspecified problem with wallet (key not found etc.)
-    RPC_WALLET_INSUFFICIENT_FUNDS   = -6,  // Not enough funds in wallet or account
-    RPC_WALLET_INVALID_ACCOUNT_NAME = -11, // Invalid account name
-    RPC_WALLET_KEYPOOL_RAN_OUT      = -12, // Keypool ran out, call keypoolrefill first
-    RPC_WALLET_UNLOCK_NEEDED        = -13, // Enter the wallet passphrase with walletpassphrase first
-    RPC_WALLET_PASSPHRASE_INCORRECT = -14, // The wallet passphrase entered was incorrect
-    RPC_WALLET_WRONG_ENC_STATE      = -15, // Command given in wrong wallet encryption state (encrypting an encrypted wallet etc.)
-    RPC_WALLET_ENCRYPTION_FAILED    = -16, // Failed to encrypt the wallet
-    RPC_WALLET_ALREADY_UNLOCKED     = -17, // Wallet is already unlocked
+	// Wallet errors
+	RPC_WALLET_ERROR                = -4,  // Unspecified problem with wallet (key not found etc.)
+	RPC_WALLET_INSUFFICIENT_FUNDS   = -6,  // Not enough funds in wallet or account
+	RPC_WALLET_INVALID_ACCOUNT_NAME = -11, // Invalid account name
+	RPC_WALLET_KEYPOOL_RAN_OUT      = -12, // Keypool ran out, call keypoolrefill first
+	RPC_WALLET_UNLOCK_NEEDED        = -13, // Enter the wallet passphrase with walletpassphrase first
+	RPC_WALLET_PASSPHRASE_INCORRECT = -14, // The wallet passphrase entered was incorrect
+	RPC_WALLET_WRONG_ENC_STATE      = -15, // Command given in wrong wallet encryption state (encrypting an encrypted wallet etc.)
+	RPC_WALLET_ENCRYPTION_FAILED    = -16, // Failed to encrypt the wallet
+	RPC_WALLET_ALREADY_UNLOCKED     = -17, // Wallet is already unlocked
 };
 
 template<int>
 struct string_i : std::string
 {
-    string_i() {}
-    explicit string_i( const std::string& s ) : std::string( s )
-    {}
+	string_i() {}
+	explicit string_i( const std::string& s ) : std::string( s )
+	{}
 };
 
 class CRpcHelper
 {
 protected:
-    shared_ptr<CCoinJsonRpc> m_rpc;
+	shared_ptr<CCoinJsonRpc> m_rpc;
 public:
-    typedef string_i<1> address_str;
-    typedef string_i<2> label_str;
-    typedef string_i<3> pubkey_str;
-    typedef string_i<4> txid_str;
-    typedef string_i<5> txdata_str;
+	typedef string_i<1> address_str;
+	typedef string_i<2> label_str;
+	typedef string_i<3> pubkey_str;
+	typedef string_i<4> txid_str;
+	typedef string_i<5> txdata_str;
 
-    typedef std::set<std::string> str_unique_list;
-    typedef std::map<address_str, label_str> mini_booklist;
+	typedef std::set<std::string> str_unique_list;
+	typedef std::map<address_str, label_str> mini_booklist;
 
-    struct addr_ext_info
-    {
-        double balance;
-        label_str label;
+	struct addr_ext_info
+	{
+		double balance;
+		label_str label;
 
-        addr_ext_info() : balance( 0 )
-        {}
-    };
-    typedef std::map<address_str, addr_ext_info> full_booklist;
+		addr_ext_info() : balance( 0 )
+		{}
+	};
+	typedef std::map<address_str, addr_ext_info> full_booklist;
 
-    struct unk_txfrom_info
-    {
-        txid_str txid;
-        size_t vout;
+	struct unk_txfrom_info
+	{
+		txid_str txid;
+		size_t vout;
 
-        unk_txfrom_info() : vout( 0 )
-        {}
-    };
-    typedef std::list<unk_txfrom_info> unk_txfrom_list;
-
-
-    struct unspent_info
-    {
-        typedef unk_txfrom_list unspent_txlist;
-        //////////////////////////////////////////////////////////////////////////
-        double total;
-        unspent_txlist txlist;
-
-        unspent_info() : total( 0 )
-        {}
-    };
+		unk_txfrom_info() : vout( 0 )
+		{}
+	};
+	typedef std::list<unk_txfrom_info> unk_txfrom_list;
 
 
-    struct payout_record
-    {
-        double fAmount;
-        address_str addr;
+	struct unspent_info
+	{
+		typedef unk_txfrom_list unspent_txlist;
+		//////////////////////////////////////////////////////////////////////////
+		double total;
+		unspent_txlist txlist;
 
-        payout_record() : fAmount( 0 )
-        {}
-    };
+		unspent_info() : total( 0 )
+		{}
+	};
 
-    typedef std::list<payout_record> payout_list;
 
-    struct TxDataInfo
-    {
+	struct payout_record
+	{
+		double fAmount;
+		address_str addr;
 
-        struct TxDestInfo
-        {
-            double value;
-            str_unique_list addr;
-        };
+		payout_record() : fAmount( 0 )
+		{}
+	};
 
-        typedef std::vector<TxDestInfo> TxDestList;
+	typedef std::list<payout_record> payout_list;
 
-        unk_txfrom_list src_txid_list;
-        TxDestList dest_list;
-    };
+	struct TxDataInfo
+	{
+
+		struct TxDestInfo
+		{
+			double value;
+			str_unique_list addr;
+		};
+
+		typedef std::vector<TxDestInfo> TxDestList;
+
+		unk_txfrom_list src_txid_list;
+		TxDestList dest_list;
+	};
 public:
-    CRpcHelper( shared_ptr<CCoinJsonRpc> pRPC )
-    {
-        m_rpc = pRPC;
-        m_cache_tick_getbalance = 0;
-    }
+	CRpcHelper( shared_ptr<CCoinJsonRpc> pRPC )
+	{
+		m_rpc = pRPC;
+		m_cache_tick_getbalance = 0;
+	}
 
-    bool IsRpcCanConnected();
+	bool IsRpcCanConnected();
 
-    pubkey_str GetPubKey( const address_str& recvaddr );
-    address_str NewMulSigAddr( const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3 );
+	pubkey_str GetPubKey( const address_str& recvaddr );
+	address_str NewMulSigAddr( const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3 );
 
-    void SetMulSigAddrLabel( const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3,
-                             const label_str& label );
+	void SetMulSigAddrLabel( const pubkey_str& PubKey1, const pubkey_str& PubKey2, const pubkey_str& PubKey3,
+							 const label_str& label );
 
-    full_booklist GetFullBookList();
-    mini_booklist GetMiniBookList();
+	full_booklist GetFullBookList();
+	mini_booklist GetMiniBookList();
 
-    double GetBalance_FromRecvAddr( const address_str& addr );
-    label_str GetLabel( const address_str& addr );
-    address_str GetOrNewAccountAddress( const label_str& label );
+	double GetBalance_FromRecvAddr( const address_str& addr );
+	label_str GetLabel( const address_str& addr );
+	address_str GetOrNewAccountAddress( const label_str& label );
 
-    void EnterPassword( const std::string& pass );
+	void EnterPassword( const std::string& pass );
 
-    txid_str SendAmount( const address_str& addr, double amount );
+	txid_str SendAmount( const address_str& addr, double amount );
 
-    unspent_info GetUnspentData_FromRecvAddr( const address_str& addr );
+	unspent_info GetUnspentData_FromRecvAddr( const address_str& addr );
 
-    txdata_str CreateRawTransaction( const unspent_info::unspent_txlist& txlist, const payout_list& paylist );
+	txdata_str CreateRawTransaction( const unspent_info::unspent_txlist& txlist, const payout_list& paylist );
 
-    txdata_str SignRawTransaction( const txdata_str& txdata );
+	txdata_str SignRawTransaction( const txdata_str& txdata );
 
-    void SendRawTransaction( const txdata_str& txdata );
+	void SendRawTransaction( const txdata_str& txdata );
 
-    TxDataInfo GetTransactionInfo_FromData( const txdata_str& txdata );
-    txdata_str GetRawTransaction_FromTxId( const txid_str& txid );
+	TxDataInfo GetTransactionInfo_FromData( const txdata_str& txdata );
+	txdata_str GetRawTransaction_FromTxId( const txid_str& txid );
 
-    void SetTxFee( double fee );
+	void SetTxFee( double fee );
 
 	std::pair<address_str, double> gettxout(const txid_str&, int n);
 public:
-    TxDataInfo GetTransactionInfo_FromTxId( const txid_str& txid )
-    {
-        return GetTransactionInfo_FromData( GetRawTransaction_FromTxId( txid ) );
-    }
+	TxDataInfo GetTransactionInfo_FromTxId( const txid_str& txid )
+	{
+		return GetTransactionInfo_FromData( GetRawTransaction_FromTxId( txid ) );
+	}
 protected:
-    double GetRecvHistoryVolume_FromTxFrom( const unk_txfrom_info& from );
+	double GetRecvHistoryVolume_FromTxFrom( const unk_txfrom_info& from );
 
-    address_str NewAddress( const label_str& label );
-    str_unique_list GetLabelList();
-    str_unique_list GetAddressList();
-    str_unique_list GetAddrList_FromLabel( const label_str& label );
+	address_str NewAddress( const label_str& label );
+	str_unique_list GetLabelList();
+	str_unique_list GetAddressList();
+	str_unique_list GetAddrList_FromLabel( const label_str& label );
 
-    void DupLabel( const address_str& addr, const label_str& label );
+	void DupLabel( const address_str& addr, const label_str& label );
 
-    Json::Value DecodeRawTransactionJson( const txdata_str& txdata );
+	Json::Value DecodeRawTransactionJson( const txdata_str& txdata );
 private:
-    UINT m_cache_tick_getbalance;
-    full_booklist m_cache_list_getbalance;
+	UINT m_cache_tick_getbalance;
+	full_booklist m_cache_list_getbalance;
 };
 
 

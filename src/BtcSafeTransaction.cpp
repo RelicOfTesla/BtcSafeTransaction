@@ -27,12 +27,12 @@ BOOL CBtcSafeTransactionApp::InitInstance()
 {
 
 	CWinApp::InitInstance();
-	CoInitializeEx(0,0);
+	CoInitializeEx(0, 0);
 
 	AfxEnableControlContainer();
 
 #if _MFC_VER >= 0x0A00
-	CShellManager *pShellManager = new CShellManager;
+	CShellManager* pShellManager = new CShellManager;
 #endif
 
 

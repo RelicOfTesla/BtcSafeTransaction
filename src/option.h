@@ -3,12 +3,13 @@
 #include <sdk/shared_ptr.h>
 #include <string>
 
-struct CRpcOption 
+struct CRpcOption
 {
 
 	std::string Bin_DIR, DB_DIR;
 
-	std::string IP; 	UINT Port;
+	std::string IP;
+	UINT Port;
 
 	std::string LoginUser, LoginPass;
 
@@ -20,7 +21,7 @@ struct CRpcOption
 
 };
 
-struct CAppOption : CRpcOption 
+struct CAppOption : CRpcOption
 {
 	BOOL DonateAuthor;
 

@@ -30,7 +30,7 @@
 
 #define STR_UNSPENT_TX_INPUT_TITLE		"未找到最新交易数据，请手工输入[交易ID,交易ID]"
 #define	STR_TX_INPUT_EMPTY				"无法自动寻找交易ID，请手工复制"
-#define	STR_UNSPENT_TX_EMPTY			"未找到交易数据，或钱已被转出了，请更新blockchain"	
+#define	STR_UNSPENT_TX_EMPTY			"未找到交易数据，或钱已被转出了，请更新blockchain"
 
 #define STR_REQUEST_RECV_ADDR_EMPTY		"收款地址错误"
 
